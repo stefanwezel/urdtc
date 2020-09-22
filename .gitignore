@@ -2,6 +2,12 @@
 pretrained/
 data/*
 log/*
+!log/
+!log/.gitkeep
 *.pth
 !data/
 !data/.gitkeep
+*.png
+*.jpg
+*.jpeg
+
