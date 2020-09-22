@@ -1,5 +1,7 @@
 .ipynb_checkpoints/
-pretrained/
+pretrained/*
+!pretrained/
+!pretrained/.gitkeep
 data/*
 log/*
 !log/
