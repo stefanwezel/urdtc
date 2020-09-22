@@ -1,3 +1,7 @@
+.ipynb_checkpoints/
 pretrained/
-data/
-log/
+data/*
+log/*
+*.pth
+!data/
+!data/.gitkeep
