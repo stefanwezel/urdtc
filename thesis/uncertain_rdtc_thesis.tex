@@ -48,26 +48,22 @@ We investigate how uncertainty information can be used in generating interpretab
 
 \chapter{Introduction}
 % Motivation for explainabiltiy and uncertainty
-The recent surge in popularity of machine learning methods has made its ambivalence obvious. Public opinion is split between hype and mistrust. 
-%TODO examples for where ML did something bad
-Several cases where an artificial intelligence made severe mistakes have made it clear that, despite being deployed more frequently than ever before, machine learning has yet to prove itself.
+The recent surge in popularity of machine learning methods has made the fields ambivalent nature obvious. Public opinion is split between hype and mistrust. 
+Several cases where an artificial intelligence made severe mistakes have made it clear that, despite being deployed more frequently than ever before, machine learning has yet to prove itself \cite{schlesinger2018let, dikmen2016autonomous,guynn2015google}.
 Thus, methods that allow introspection and behave faithfully are more important than ever.
-
 
 \citet{alaniz2019explainable} propose a model that can reliable justify its classification through stating utilized features in a decision tree. Here, we build on this method. We extend the model, so that it is able to express and is aware of its own uncertainties and uncertainty in the data. We hypothesize that such a model may be perceived by a user as more trustful than a model that does not. 
 %TODO overconfidence of softmax and uncertainty
 % TODO more motivation on uncertainty
-Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where prediction, far into the future are required. Or, where decisions with high consequences are made.\\
-Unfortunately, uncertainty in classification models can not simply be measured by model outputs. Typical architectures use a softmax layer, to turn model outputs into a probability density function. The input for the softmax (logits) can be viewed as a predictive mean of the (citation needed) of the models output given data. As a point estimate, this predictive mean lacks variance information, which would be the basis for uncertainty. The output of a softmax layer may be overconfident for highly uncertain classes. 
-%TODO think about whether this is true
-Let's consider logits, passed through a softmax that are centered closely around $0$. These logits are probably from data, a model is not certain about. We can consider a logit value of zero as $p=0.5$ for this class being true. Thus most classes have the probability of a coin flip. Another logit, a scaled version of the first one should result in a more confident output. However, if passed through softmax, both vectors result a similar output.
+Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences are made.\\
+Unfortunately, uncertainty in classification models can not simply be measured by model outputs \cite{gal2016dropout}. Typical architectures use a softmax layer, to turn model outputs into a probability density function. The input for the softmax (logits) can be viewed as a predictive mean of the (citation needed) of the models output given data. As a point estimate, this predictive mean lacks variance information, which would be the basis for uncertainty. The output of a softmax layer may be overconfident for highly uncertain classes.
 
 
 % Key contributions
 Our key contributions are to propose a model, that allows to (1) study the effect of (epistemic) uncertainty for attribute based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed models performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its affect on performance. 
 
 % Example applications
-Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings or in autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as explanation, which could be utilized by a human user to make a final decision.
+Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings o	r in autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as explanation, which could be utilized by a human user to make a final decision.
 
 
 
@@ -284,7 +280,7 @@ The explicit memory $\mathcal{M}^{(t)}$ is also the basis for the class predicti
 
 
 \subsection{Learning}
-Ideally, the model should come to a classification in as few communication steps as possible. The tree resulting from few communication steps is shallow and easier to interpret. To keep the model from using deep trees, the classification loss is divided by the number of time steps (communication steps):
+Ideally, the model should come to a classification in as few communication steps as possible. A tree resulting from few communication steps is shallow and easier to interpret. To keep the model from using deep trees, the classification loss is divided by the number of time steps (communication steps):
 \begin{align}
 	\mathcal{L} = \frac{1}{T} \sum_{t=1}^{T}\mathcal{L}_{CE}(y, \hat{y}_t) = - \frac{1}{T}\sum_{t=1}^{T}\sum_{i}y_i \cdot log\;\hat{y}_{t,i}.
 \end{align}
@@ -515,7 +511,7 @@ In Figure \ref{fig:correlations} we can see that this is true and uncertain attr
 
 
 
-\section{Results}
+\section{Results}\label{sec:results}
 We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.\\
 ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-trained on ImageNet data \cite{deng2009imagenet} data and then fine-tuned on the specific tasks. We also use the ResNet trained in this manner in our proposed uRDTC model to extract features. When we train the uRDTC model, we keep the weights in the ResNet fixed and only adjust all other parameters in the model.
 XDT and DT are both traditional decision tree models that serve as as a baseline. For DT \citet{alaniz2019explainable} propose following method: DT is are given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in extracted feature vector. For each split, one feature is chosen and then a split gets created. This is repeated until either each leaf node corresponds to exactly one class or a early stopping-criterion is met. Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, in order for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by a MLP that was trained to predict attributes given ResNet features. They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.\\
@@ -586,9 +582,11 @@ We evaluated different configurations of our model on the three datasets. We com
 \end{tabular*}
 
 \section{Testing on Out-of-domain Data}
-
+An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty.
 
 \chapter{Discussion}
+In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty is useful in our setting and how we could alleviate remaining issues.
+
 
 \section{Performance Draw-off with Uncertainty}
 %Did we consider right kind of uncertainty?
