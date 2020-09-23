@@ -127,8 +127,8 @@ CNNs have proven a useful tool for various image related tasks. They are a type 
 
 
 \section{Explainable Machine Learning}
-While interpretable models exist in machine learning, they are outperformed by modern ANNs with a large number of parameters, on a variety of tasks. Understanding the processes inside a model with so many parameters is not trivial. Thus, various approaches have been developed to understand a models decision process for given data.
-A model that is interpretable or can explain its decisions is inevitable for safety critical applications where trust by users is required. %TODO rephrase
+While interpretable models exist in machine learning, they are often outperformed by modern ANNs with a large number of parameters, on a variety of tasks \cite{gunning2019xai, guo2020explainable, sarkar2016accuracy, puiutta2020explainable}. Understanding the processes inside a model with a large number of parameters is not trivial. Thus, various approaches have been developed to understand a models decision process for given data. Such methods, that are interpretable or can explain their decisions are inevitable for safety critical applications. They allow a human user to understand how a model came to a certain output and allow for a faithful human-AI interaction to emerge.
+
 
 \subsection{Decision Trees}
 Decisions trees provide an inherently interpretable model. Given data with features $a_1, ..., a_n$ a decision tree iteratively splits data according to conditions for each attribute. Splits occur for each attribute $a_i$ where samples from data are either above or below a given threshold for their values of $a_i$. Optimal splits can be found by learning algorithms or by expert knowledge. Nodes represent the resulting splits and edges represent the corresponding answer.
@@ -161,7 +161,7 @@ In other areas, attributes are used as well. \citet{kulkarni2013babytalk} and \c
 
 
 \subsection{Multi-agent Communication}
-Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence}, \cite{lazaridou2018emergence}, \cite{cao2018emergent}, \cite{jiang2018learning}, \cite{das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. 
+Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. 
 
 \section{Uncertainty}
 Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. Aleatoric uncertainty arises from noise withing the data. If this noise is static (i.e. limited precision of a sensor) it is call homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty.\\
@@ -244,10 +244,11 @@ Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and 
 
 
 \chapter{Uncertain RDTC} % aka Methods aka Architecture
-The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. Their common goal is to solve a classification task through communication. The Recurrent Decision Tree (RDT) agent has no direct access to data and can only ask question regarding the absence, presence or uncertainty of attributes. Given answers by the Attribute-based Learner (AbL) agent it can then store the answers thus incrementally building a decision tree that is used for the final classification. The learned decision three allows introspection.
+The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. Their common goal is to solve a classification task through communication. The Recurrent Decision Tree (RDT) agent has no direct access to data and can only ask question regarding the absence, presence or uncertainty of attributes. Given answers by the Attribute-based Learner (AbL) agent it can then store the answers thus incrementally building a decision tree that is used for the final classification. The learned decision three allows introspection.\\
+Based on their work, we propose a model, where the AbL is able to express its uncertainty for given attributes. We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'. 
 
 
-%TODO motivation on why we need uncertainty (with picture from paper)
+
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/uncertaintRDTC.pdf} 
@@ -255,7 +256,8 @@ The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, co
 	\label{fig:uncertainRDTC}
 \end{figure}
 
-\section{RDTC} %Descrive tree rollout here? 
+\section{RDTC} 
+Before we introduce our modifications to the RDTC model, we will give a detailed explanation of its architecture, learning algorithm and how the two agents communicate.
 
 %TODO intro
 \subsection{AbL}
