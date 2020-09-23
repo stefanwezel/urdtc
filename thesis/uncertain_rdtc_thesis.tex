@@ -53,10 +53,12 @@ Several cases where an artificial intelligence made severe mistakes have made it
 Thus, methods that allow introspection and behave faithfully are more important than ever.
 
 \citet{alaniz2019explainable} propose a model that can reliable justify its classification through stating utilized features in a decision tree. Here, we build on this method. We extend the model, so that it is able to express and is aware of its own uncertainties and uncertainty in the data. We hypothesize that such a model may be perceived by a user as more trustful than a model that does not. 
-%TODO overconfidence of softmax and uncertainty
+
 % TODO more motivation on uncertainty
-Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences are made.\\
-Unfortunately, uncertainty in classification models can not simply be measured by model outputs \cite{gal2016dropout}. Typical architectures use a softmax layer, to turn model outputs into a probability density function. The input for the softmax (logits) can be viewed as a predictive mean of the (citation needed) of the models output given data. As a point estimate, this predictive mean lacks variance information, which would be the basis for uncertainty. The output of a softmax layer may be overconfident for highly uncertain classes.
+Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences have to be made.\\
+% overconfidence of softmax and uncertainty
+Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function \cite{nwankpa2018activation} over classes. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
+
 
 
 % Key contributions
