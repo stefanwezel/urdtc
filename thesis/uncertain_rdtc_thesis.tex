@@ -49,23 +49,20 @@ We investigate how uncertainty information can be used in generating interpretab
 \chapter{Introduction}
 % Motivation for explainabiltiy and uncertainty
 The recent surge in popularity of machine learning methods has made the fields ambivalent nature obvious. Public opinion is split between hype and mistrust. 
-Several cases where an artificial intelligence made severe mistakes have made it clear that, despite being deployed more frequently than ever before, machine learning has yet to prove itself \cite{schlesinger2018let, dikmen2016autonomous,guynn2015google}.
-Thus, methods that allow introspection and behave faithfully are more important than ever.
-
-\citet{alaniz2019explainable} propose a model that can reliable justify its classification through stating utilized features in a decision tree. Here, we build on this method. We extend the model, so that it is able to express and is aware of its own uncertainties and uncertainty in the data. We hypothesize that such a model may be perceived by a user as more trustful than a model that does not. 
-
-% TODO more motivation on uncertainty
-Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences have to be made.\\
+Systems, using machine learning have failed at seemingly simple tasks \cite{kelion2018ces}, displayed racist and sexist behavior \cite{guynn2015google, schlesinger2018let, zou2018ai} and even caused fatalities \cite{yadron2016tesla}.
+Such cases, where an artificial intelligence has made severe mistakes are funny at best and outright dangerous at worst. Most importantly, they have made it clear that, despite being deployed more frequently than ever before, machine learning has yet to prove itself \cite{schlesinger2018let, dikmen2016autonomous, zou2018ai}.
+These cases show that methods that allow introspection and behave faithfully are more important than ever.\\
+Addressing such issues, \citet{alaniz2019explainable} propose a model that can reliable justify its classification through stating utilized features in a decision tree. Here, we build on this method. We extend the model, so that it is aware of and able to express its own uncertainties. We hypothesize that such a model may be perceived by a user as more trustful than a model that does not.\\
+% more motivation on uncertainty
+We, as humans have developed an intuition how do make decisions under uncertainty \cite{bland2012different} and are able to operate in a domain of limited and noisy data. Moreover, uncertainty is an important measure in science that allows to express how well something is known or can be known. Scientists from fields like medicine, physics or meteorology rely on uncertainty information for making and communicating decisions or predictions. Outside the scientific world, uncertainty information is important in finance or law among others \cite{liu2013toward, d1983legal}.\\
+Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited, or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences have to be made. 
+As machine learning becomes more prevalent in our everyday lives, in science, finance, or law, the need for methods, utilizing uncertainty becomes more evident.\\
 % overconfidence of softmax and uncertainty
 Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function \cite{nwankpa2018activation} over classes. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
-
-
-
 % Key contributions
-Our key contributions are to propose a model, that allows to (1) study the effect of (epistemic) uncertainty for attribute based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed models performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its affect on performance. 
-
+Our key contributions are to propose a model, that allows to (1) study the effect of (epistemic) uncertainty for attribute based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed models performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its affect on performance. \\
 % Example applications
-Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings o	r in autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as explanation, which could be utilized by a human user to make a final decision.
+Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings, in law or in autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as explanation, which could be utilized by a human user to make a final decision.
 
 
 
