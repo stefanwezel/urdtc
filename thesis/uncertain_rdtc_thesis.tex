@@ -533,27 +533,18 @@ Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \ci
 	\hline 
 	aRDTC\cite{alaniz2019explainable}&$98.1\pm 0.0$&$85.3\pm 0.3$  &  $77.9\pm 0.6$\\ 
 	\hline
-	uRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $0.0\pm 0.0$\\ 
+	remRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $0.0\pm 0.0$\\ 
+	\hline
+	extRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $0.0\pm 0.0$\\
 	%\hline 
 \end{tabular*}
 
 \subsection{Comparing Different RDTC Models}
 We evaluated different configurations of our model on the three datasets. We compared the original RDTC model to models using our two proposed strategies of attribute removal and extended vocabulary. We also included a baseline, that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold.
-\subsubsection{CUB}
-
-\begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
-	& RDTC \cite{alaniz2019explainable} & Random Baseline & Remove Attributes & Extended Vocabulary \\ 
-	\hline 
-	\hline
-	Class &  &  &  &  \\ 
-	\hline 
-	Attribute &  &  &  &  \\ 
-\end{tabular*}
-
-
 \subsubsection{AWA2}
+
 \begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
-	& RDTC \cite{alaniz2019explainable} & Random Baseline & Remove Attributes & Extended Vocabulary \\ 
+	& aRDTC \cite{alaniz2019explainable} & Random Baseline & remRDTC & extRDTC \\ 
 	\hline 
 	\hline
 	Class &  &  &  &  \\ 
@@ -564,7 +555,18 @@ We evaluated different configurations of our model on the three datasets. We com
 
 \subsubsection{aPY}
 \begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
-	& RDTC \cite{alaniz2019explainable} & Random Baseline & Remove Attributes & Extended Vocabulary \\ 
+	& aRDTC \cite{alaniz2019explainable} & Random Baseline & remRDTC & extRDTC\\ 
+	\hline 
+	\hline
+	Class &  &  &  &  \\ 
+	\hline 
+	Attribute &  &  &  &  \\ 
+\end{tabular*}
+
+
+\subsubsection{CUB}
+\begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
+	& aRDTC \cite{alaniz2019explainable} & Random Baseline & remRDTC & extRDTC \\ 
 	\hline 
 	\hline
 	Class &  &  &  &  \\ 
@@ -573,7 +575,7 @@ We evaluated different configurations of our model on the three datasets. We com
 \end{tabular*}
 
 \section{Testing on Out-of-domain Data}
-An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty.
+An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty. We (1) use a zero shot setting where we get ood examples from unseen classes. Following \citet{8413121}, we exclude classes overlapping with ImageNet from our training data. We empirically evaluate whether our models yield significantly higher uncertainty for unseen classes during inference.
 
 \chapter{Discussion}
 In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty is useful in our setting and how we could alleviate remaining issues. We also take a look at a hypothetical example, on how uncertainty information could be used.
