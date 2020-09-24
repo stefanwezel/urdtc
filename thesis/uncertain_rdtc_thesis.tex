@@ -260,9 +260,13 @@ Based on their work, we propose a model, where the AbL is able to express its un
 Before we introduce our modifications to the RDTC model, we will give a detailed explanation of its architecture, learning algorithm and how the two agents communicate.
 
 %TODO intro
+\subsection{Communication}
+The two agents communicate to each other through discrete values. For a given image, the AbL returns a an answer $\hat{a}$ that is a tensor with binary values with size $\text{number of attributes} \times \text{decision size}$. The intention behind using only binary values in the AbL's answer is increased interpretability. Each row in this tensor indicates the presence/absence of an attribute and the columns correspond to the decision options 'Yes' or 'No'. Strictly speaking, the AbL thus answers all possible questions the RDT can ask,in advance to any questions. 
+The RDT is then able to ask questions through posing an index $c_t$. By accessing the AbL's answer at this index it receives answer $d_t = \hat{a}[d_t]$. This information then used to build an internal decision tree, used for a classification output and to come up with a new question. In the following, we will go over each agent in more detail and explain how this model is trained.
+
+
 \subsection{AbL}
-The AbL agent is a vision model, consisting of a CNN and a MLP. The CNN learns features and the MLP learns mappings from features to attributes (if available). For all experiments, we used a ResNet \cite{he2016deep} to learn features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax. The output is a tensor $p(\hat{a}|z)$ with shape $number\_attributes \cdot decision\_size$. This corresponds to a probability distribution over the decision option for each attribute. In order to get an interpretable, binary response, in the forward pass, the result of the softmax is put through an arg max function. This is, however, not differentiable. In the backward pass it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes by indexing.
-%TODO check whether this is true
+The AbL agent is a vision model, consisting of a CNN and a MLP. The CNN learns image features and the MLP learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax. The output is a tensor $p(\hat{a}|z)$ with shape $number\_attributes \times decision\_size$. This corresponds to a probability distribution over the decision option for each attribute. In order to get an interpretable, binary response, in the forward pass, the result of the softmax is put through an arg max function. This is, however, not differentiable. In the backward pass it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes by indexing.
 
 
 \subsection{RDT}
@@ -273,10 +277,10 @@ The $f_{QuestMLP}$ is responsible for thinking of new questions by returning an 
 			log\;pi &=log\;p(c_t|h_{t-1})\text{ , and thus:}\\
 			c_t &= GumbelSoftmax(log\;p(c_t|h_{t-1})).
 \end{align}
-%TODO explain h_{t-1} and tau$\mathcal{M}^{(t)}
-The resulting scalar $c_t$ then can be used to index $\hat{a}$. The response is $d_t$ which indicates absence, presence or uncertainty of the attribute at index $c_t$. Question $c_t$ and answer $d_t$ then update explicit memory $\mathcal{M}^{(t)} = \mathcal{M}^{(t-1)} \oplus (c_t, d_t)$.\\
+where for $\tau \rightarrow 0$, the distribution approaches a one-hot vector with a $1$ at the maximum of the categorical distribution and $0$ everywhere else.\\ 
+The resulting scalar $c_t$ then can be used to index $\hat{a}$. The response is $d_t$ which indicates absence, presence or uncertainty of the attribute at index $c_t$. Question $c_t$ and answer $d_t$ then update explicit memory $\mathcal{M}^{(t)} = \mathcal{M}^{(t-1)} \oplus (c_t, d_t)$. Note that during test time, rather than sampling $c_t$, the index with the highest probability is chosen.\\
 The explicit memory $\mathcal{M}^{(t)}$, $c_t$, $d_t$ and the LSTM's last hidden state $h_{t-1}$ are then used to computer the current hidden state $h_t$, which is then, in turn, used by the $f_{QuestMLP}$ again to pose a new question.\\
-The explicit memory $\mathcal{M}^{(t)}$ is also the basis for the class prediction. An additional MLP, the $f_{ClassMLP}$ returns class probabilities $\hat{y}_t$ based on  $\mathcal{M}^{(t)}$:
+The explicit memory $\mathcal{M}^{(t)}$ is also the basis for the class prediction. An additional MLP, the $f_{ClassMLP}$ returns class probabilities $\hat{y}_t$ based on  $\mathcal{M}^{(t)}$ for every communication step:
 \begin{align}
 	\hat{y}_t = f_{ClassMLP( \mathcal{M}^{(t)})}.
 \end{align} The classification is the the final output of the model and is used to calculate a loss that can be optimized.
@@ -293,12 +297,6 @@ Besides the classification loss, an additional attribute loss can be leveraged i
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
 \end{align}
 How much each loss contributes to the total loss can be determined by hyperparameter $\lambda$.
-
-\subsection{Communication}
-
-
-
-
 
 
 
@@ -331,10 +329,8 @@ Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\r
 
 
 
-\subsection{Getting Uncertainty Information} %TODO what kind of uncertainty
-%TODO maybe visualization of architecture here
+\subsection{Getting Uncertainty Information}
 We tested different configurations for $f_{AttributeMLP}$ and using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. This setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proved by \citet{gal2016dropout}, this is equal to epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty. 
-%TODO rewrite if new strategy is used.
 After retrieving uncertainty information, we either replace logits of attributes with high uncertainty with $min(logits)$ so they can not be picked by the softmax or they are denoted with a $1$ in a extended decision tensor. We refer to the first strategy as removing uncertain attributes and the latter as extended vocabulary.
 
 
@@ -342,7 +338,6 @@ After retrieving uncertainty information, we either replace logits of attributes
 \subsection{Estimating Epistemic Uncertainty with Dropout Neural Networks}
 Epistemic uncertainty corresponds to the variance of the models parameters.
 In a traditional dropout neural network, there is no random dropping out of neurons in test stage and weights are fix. This would result in no variance of model outputs for multiple forward passes given an input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic (model) uncertainty. Here, we will go through their proof.\\
-%TODO proof by Gal et al. here
 The key idea is that a dropout neural net is equivalent to an approximation of a Gaussian process. To randomly dropout neurons, we sample binary values that are either $0$ or $1$ for every neuron. The sampled value is then multiplied with the neurons value.
 In the following, the dropout neural network with $L$ layers the weight matrices are denoted by $W_{l \in L}$, the bias vectors by $b_l$, the network output given datapoint $x_i \in X$ with size $N$ by $\hat{y}_i$, and the true value by $y_i \in Y$. The objective of the network is to minimize a given loss function $E(y_i, \hat{y}_i)$. Additionally, a weighted regularization term can be added to the loss function. A popular technique is to use $L_2$ regularization, weighted by a weight decay term $\lambda$. The final resulting loss term is:
 \begin{align*}
@@ -435,11 +430,8 @@ and set hyperparameters $\tau$ and $l$ to appropriate values.
 		\label{fig:corr_matrix}
 	\end{minipage}
 \end{figure}
-After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{AttrMLP}$ such that every attribute's logit, where uncertainty is higher than a given threshold, is replaced with the tensor's minimum logit. This ensures, that the row-wise softmax cannot pick this logit as maximum.
-%TODO check whether this is correct
+After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{AttrMLP}$ such that every attribute's logit, where uncertainty is higher than a given threshold, is replaced with the tensor's minimum logit. This ensures, that the row-wise softmax cannot pick this logit as maximum.\\
 We tested this strategy both in test-only and in training and testing stage. When using it in the test stage for a model, that was trained regularly (without uncertainty information), the model suffered severe performance drops, displayed in Figure \ref{fig:threshold_accuracies}. Especially, for low cut-off thresholds. It never outperforms a model that keeps all attributes. We hypothesize that this is due to actively removing options from a pool of attributes, that the model is already well adapted to and as shown in Figure \ref{fig:less_attrs} rarely misclassifies despite being uncertain.
-%TODO test also with alearoric unceratinty
-%TODO when using in training (overfitting)
 
 
 \subsection{Extending the Vocabulary}
@@ -492,9 +484,6 @@ The purpose of the proposed model is not only to evaluate it on benchmark datase
 In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows high negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
 
 
-
-
-
 \begin{figure}[t!]
 	\centering
 	\begin{minipage}{0.45\textwidth}
@@ -510,7 +499,6 @@ In Figure \ref{fig:correlations} we can see that this is true and uncertain attr
 		\label{fig:corr_matrix}
 	\end{minipage}
 \end{figure}
-
 
 
 
@@ -588,13 +576,19 @@ We evaluated different configurations of our model on the three datasets. We com
 An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty.
 
 \chapter{Discussion}
-In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty is useful in our setting and how we could alleviate remaining issues.
+In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty is useful in our setting and how we could alleviate remaining issues. We also take a look at a hypothetical example, on how uncertainty information could be used.
 
 
-\section{Performance Draw-off with Uncertainty}
-%Did we consider right kind of uncertainty?
+\section{Reduced Performance with Uncertainty}
+Both of our proposed models, do not perform as well as the original RDTC, proposed by \citet{alaniz2019explainable}. We hypothesize why this might be the case for (1) our removing attributes model (rRDTC) and (2) our extended vocabulary model (uRDTC).\\
+In our rRDTC model, we actively remove attributes and thus information that otherwise could be utilized by the RDT agent. In Figure \ref{fig:less_attrs}, we see that the model uses attributes it is highly uncertain about. If such attributes cannot be chosen by the RDT, it has less information (albeit risky information) available about an image to make a classification.\\
+%TODO verify talk about this to Zeynep and Stephan
+In our extended vocabulary strategy this is not the case. Here, the RDT always gets information about any attribute it may ask. However, since we avoid using gradients, coming from uncertain attributes, we still might loose information. This can lead to slower convergence time. It also might lead to reduced performance since the path chosen, by the gradient descent algorithm might differ from that chosen by a model, with additional gradients. Thus, it may find a different local minimum.
+
+
+
 \section{The Right Kind of Uncertainty?}
-In our approach, we only considered epistemic uncertainy, which is the uncertainty arising from variance in the model's parameters. However, in closed datasets, as the ones considered, epistemic uncertainty will not change very much after the model has seen every training example. This happens within one epoch.
+In our approach, we only considered epistemic uncertainty, which is the uncertainty arising from variance in the model's parameters. However, in closed datasets, as the ones considered, epistemic uncertainty will not change very much after the model has seen every training example. This happens within one epoch.
 
 \subsection{Estimating Heteroscedastic Uncertainty}
 Heteroscedastic is a function of data and thus can be learned. \citet{kendall2017uncertainties} propose to learn an additional output $\sigma^2$ and a loss function:
@@ -608,8 +602,6 @@ If a prediction is wrong, it encourages a high value for $\sigma^2$, thus loweri
 \\
 %TODO explain why this is useful for regression but not so much for classification 
 Alternatively, a different approach was proposed by \citet{kwon2020uncertainty} that does not require learning $\sigma^2$. 
-
-
 
 \begin{align}
 \label{eq:approx}
@@ -629,14 +621,14 @@ which is the diagonal of the expected outputs, subtracted by the product of the 
 
 
 
-\section{Effect of Uncertainty in Practical Applications}
+\section{A Practical Example}
 We demonstrated a model that can tell the user reliably about its uncertainties in an explainable decision process. In a realistic setting this could provide users with valuable insights. Instead of only yielding the final classification and explanation tree, the model can also tell a user how uncertain it is about each part of the tree. If a user sees that the model was uncertain about several attributes it used, the user can take a second look.\\
 Let's consider an example where an ornithologist is tasked to create comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that shoots a picture of every bird it encounters. After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our UncertainRDTC and decides to use it on the data. For each image, the model yields a classification and an explanation. However, due to climate change some bird species that typically don't occur in the survey area have made their way into collected data. The model has never seen such birds that typically appear only much more south and thus is highly uncertain and yields following result:
-%TODO qualitative example here
+% ornithology example 
 \begin{figure}[h]
 	\centering
-	%\includegraphics[width=1\textwidth] 
-	\caption{...}
+	\includegraphics[width=0.9\textwidth]{ornithology.pdf}
+	\caption{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually.}
 	\label{fig:qual}
 \end{figure}
 \\
@@ -644,6 +636,15 @@ The ornithologist sees that the model is unaware of this species and therefore c
 
 
 \section{Carbon Footprint Estimation}
+% devices
+To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact, of the $CO_2$ emissions caused by producing the required electricity, on the world's climate.
+The GPUs provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which at full capacity operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
+% epochs
+While no single model was trained for more than $50$ epochs, if we consider all models and all iterations of models, we accumulate about $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs, we have consumed $200h * 300\;kW = 60000\;kWh$ of power.\\
+% co equivalent
+The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
+
+
 
 
 \chapter{Conclusion}
