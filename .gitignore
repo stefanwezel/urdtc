@@ -10,6 +10,7 @@ log/*
 *.pth
 !data/
 !data/.gitkeep
+!data/cub/zero_shot_train_test_split.txt
 *.png
 *.jpg
 *.jpeg
