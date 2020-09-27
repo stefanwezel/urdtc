@@ -1,3 +1,4 @@
+del.*
 *.~lock.*
 .ipynb_checkpoints/
 pretrained/*

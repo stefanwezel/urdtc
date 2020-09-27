@@ -1,7 +1,6 @@
 \documentclass[a4paper,cleardoubleempty,BCOR1cm, 11pt]{report}
 \input{header}
 
-
 \begin{document}
 \vspace*{10ex}
 Bachelorarbeit
@@ -155,7 +154,7 @@ In order to reduce size and increase interpretability of generated trees, prunin
 
 
 \subsection{Leveraging Attributes}
-While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is by humans label the data according to characteristics suggested by domain experts. \citet{WelinderEtal2010} let users label different kind of bird species according to attributes and collect them in the CUB dataset \cite{WelinderEtal2010}. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
+While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is by humans label the data according to characteristics suggested by domain experts. \citet{WahCUB_200_2011} let users label different kind of bird species according to attributes and collect them in the CUB dataset \cite{WahCUB_200_2011}. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
 Attributes can be used to create an interpretable output of a neural network. \citet{akata2013label} propose to learn a linear mapping between feature representations learned by a neural network and learned attribute representations.
 In other areas, attributes are used as well. \citet{kulkarni2013babytalk} and \citet{ordonez2011im2text} use attributes for image captioning. \citet{lampert2009learning} and \citet{palatucci2009zero} use attributes for zero-shot learning.
 
@@ -201,7 +200,9 @@ Gaussian processes are a powerful, generative model that can be applied to a var
 GPs thus view each $x_i$ as a random variable, that is dependent on all other $x_j\neq x_i$.\\
 To perform inference in a GP, one simply takes the conditional probability density distribution (PDF) of a given $x_i$ conditioned on all other $x_j\neq x_i$. Since Gaussian distributions are closed under conditioning, the resulting PDF is Gaussian as well.\\
 To retrieve a meaningful posterior from a GP, it has to be trained in a supervised fashion. We will describe the necessary steps in pseodocode.
+
 \begin{algorithm}[ht]
+\setlength{\leftskip}{4mm}
 -create a prior-\\
 $x_{test}$= $\lbrace x_n \rbrace$\\
 $K_{prior}$ = kernel($x_{test}$, $x_{test}$, $w$)\\
@@ -463,7 +464,7 @@ We evaluated our proposed model on different image classification datasets which
 
 
 \section{Datesets}
-We test our model on image datasets that provide attributes as side information. Popular datasets for this setting are Animals with Attributes 2 (AwA2) \cite{8413121}, aPY \cite{farhadi2009describing} and CUB \cite{WelinderEtal2010}. Datasets with attributes are frequently used for zero- or few-shot learning tasks. In the explainable machine learning community they are popular since attributes provide a human interpretable, natural language parametrization of features.\\
+We test our model on image datasets that provide attributes as side information. Popular datasets for this setting are Animals with Attributes 2 (AwA2) \cite{8413121}, aPY \cite{farhadi2009describing} and CUB \cite{WahCUB_200_2011}. Datasets with attributes are frequently used for zero- or few-shot learning tasks. In the explainable machine learning community they are popular since attributes provide a human interpretable, natural language parametrization of features.\\
 %TODO describe datasets in more detail
 AwA2 is a set of 37,322 images that can be subdivided into 50 different classes of animals. Human annotators were tasked to label each image, choosing from 85 available attributes that describe each animal class. The aPY dataset provides 15,339 images, annotated with 64 different attributes that describe each of the 32 classes. Finally, the most challenging dataset is CUB. Here, the task is to classify 11,788 different images into 200 different classes. For this task, each images is annotated with 312 descriptive attributes.
 
@@ -650,8 +651,11 @@ The German federal office for environmental concerns (Umweltbundesamt) estimates
 
 
 \chapter{Conclusion}
-
-
+Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes, provided as side information. The nodes of the resulting tree correspond to attributes, and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree, or extend it to a ternary decision tree, where '?' is an additional option.\\
+While our proposed extension does not outperform the original aRDTC model, our remRDTC and extRDTC still outperform other explainable methods such as decision trees or dNDF. Moreover, the performance is comparable to that of uninterpretable state of the art methods, such as ResNet.\\
+Our model does not only utilize uncertainty information but also allows introspection. We use this to further investigate the relationship between attribute usage, misclassification and uncertainty.
+We empirically show that our model (hopefully) reliable yields high uncertainty for ood examples. This would allow the model to consult a human user in cases of high uncertainty, thus making it more applicable in real-world scenarios.
+Finally, we critically reflect the weaknesses of the model and propose possible improvements for future work.
 \bibliographystyle{alpha}
 \bibliography{bibliography}
 
