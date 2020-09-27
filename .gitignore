@@ -11,13 +11,13 @@ log/*
 *.pth
 !data/
 !data/.gitkeep
+!data/cub/zero_shot_train_test_split.txt
 *.png
 *.jpg
 *.jpeg
-
 ######### tex
 ## Core latex/pdflatex auxiliary files:
-*.pdf
+#*.pdf
 *.aux
 *.lof
 *.log
