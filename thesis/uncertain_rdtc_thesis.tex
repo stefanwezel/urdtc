@@ -30,8 +30,8 @@ Stefan Wezel,~ \verb+stefan.wezel@student.uni-tuebingen.de+,~ 2020
 
 %\input{teaser}
 \chapter*{Abstract}
-Recurrent Decision Tree Classifiers have proven to be capable of providing explanations of their classification while yielding state of the art results in prediction accuracy on several image classification tasks. However, they may utilize features that they are highly uncertain about. We hypothesize that when using uncertainty information, the RDTC can provide more faithful explanations and even reach higher prediction accuracy.
-We enhance the vocabulary of RDTC with an uncertainty token that is returned by an Attribute-based Image Classifier. This additional information on uncertainty of image features can then be used by an Decision Tree Classifier.
+Recurrent Decision Tree Classifiers have proven to be capable of providing explanations of their classification while yielding state of the art results in prediction accuracy on several image classification tasks. However, we show that they may utilize features that they are highly uncertain about. We hypothesize that when using uncertainty information, the RDTC can provide more faithful explanations and become more applicable in real-life scenarios.
+Based on RDTC, we propose two models that utilize uncertainty information. We either enhance the vocabulary of RDTC with an uncertainty token, allowing for a ternary decision tree, or, we restrict the RDTC from using uncertain attributes.
 We investigate how uncertainty information can be used in generating interpretable model outputs and how it affects the models performance on several benchmark tasks.
 
 
@@ -67,7 +67,7 @@ Such a model may be applied in settings, where a high confidence classification 
 
 
 \chapter{Related Work}
-Building on, often centuries old, mathematical foundations, and on psychological and neurobiological insights, machine learning has evolved throughout the last decades and a vast corpus of literature has emerged from this development. Here we will briefly go over some historic aspects, introduce important concepts and give an overview of the current state of explainable methods in machine learning.
+Building on, often centuries old, mathematical foundations, and on more recent psychological and neurobiological insights, machine learning has evolved throughout the last decades and a vast corpus of literature has emerged from this development. Here we will briefly go over some historic aspects, introduce important concepts and give an overview of the current state of explainable methods and uncertainty in machine learning. 
 
 
 \section{Neural Networks}
@@ -81,7 +81,7 @@ Over the decades, ANNs have risen and fallen in popularity among AI researchers.
 However, these methods still failed to establish far beyond the realm of research. The development of graphics processing units (GPUs) and the availability of large scale datasets have caused this to change in the 2010s where for some tasks ANNs have exceeded human performance \cite{ILSVRC15}.
 
 
-\subsection{Multilayer Perceptron}
+\subsection{Multilayer Perceptron}\label{sec:MLP}
 The MLP is a rather simple architecture. It consists of an input layer, an arbitrary number of hidden layers and an output layer. Each neuron is typically connected to each neuron in the next layer. Thus each neuron gets the weighted output from the last layer's neurons as input. Non-linear activation functions allow the network to learn not linearly separable problems. 
 
 
@@ -95,7 +95,6 @@ The MLP is a rather simple architecture. It consists of an input layer, an arbit
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=0.9\textwidth,height=0.20\textheight]{images/rnn.pdf}
-		
 		\caption{The recurrent neural network takes in an input for every time step as well as its own hidden state.}
 		\label{fig:rnn}
 	\end{minipage}
@@ -105,17 +104,17 @@ The MLP is a rather simple architecture. It consists of an input layer, an arbit
 
 
 \subsection{Recurrent Neural Networks}
-Many types of data don't provide samples of fixed length. This is the case for most language or time series data among others. A MLP, however, is incapable to process such samples due to its fixed amount of input neurons. To alleviate this, recurrent neural networks (RNNs) channel use the output of their neurons as an input after being multiplied with a weight matrix. Many concepts of RNNs exist \cite{Grossberg:2013}. Here we will have a closer look at a very simple example, depicted in Figure \ref{fig:rnn}.
+Many types of data don't provide samples of fixed length. This is the case for most language or time series data among others. A MLP, however, is incapable of processing such samples due to its fixed amount of input neurons. To alleviate this, recurrent neural networks (RNNs) use the output of their neurons as an input after being multiplied with a weight matrix. Many concepts of RNNs exist \cite{Grossberg:2013}. Here we will have a closer look at a very simple example, depicted in Figure \ref{fig:rnn}.
 The  RNN takes in an input $in_t$ which is transformed by weight matrix $u$ and added to the hidden state of the last time step times weight matrix $w$. This forms the hidden state of the current time step. To obtain an output at a given time step, the hidden state is multiplied with weight matrix $v$. The update rules can be stated as:
 \begin{align}
 	h_t &= f_{act}(u \circ in_t + w \circ h_{t-1})\\
 	out_t &=f_{act}(v \circ h_t)
 \end{align}
-A RNN can be trained by the Backpropagation through time algorithm (BPTT). \citet{werbos1990backpropagation} propose to unfold a RNN for each time step or element of the input. This unfolding makes it equivalent to a feed-forward ANN and weights can be adjusted according to the gradients.
+A RNN can be trained by the Backpropagation through time algorithm (BPTT). \citet{werbos1990backpropagation} propose to unfold a RNN for each time step or element of the input. This unfolding makes it equivalent to a feed-forward ANN (such as the MLP introduced in Subsection \ref{sec:MLP}) and weights can be adjusted according to the gradients.
 
 
 \subsection{Convolutional Neural Networks}
-CNNs have proven a useful tool for various image related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers with the intention of learning to recognize features low level concepts such as edges in layers close to the input layer and high level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled using a pooling operation to reduce parameters.
+CNNs have proven to be useful tool for various image related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers with the intention of learning to recognize low level concepts such as edges in layers close to the input layer and high level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled, using a pooling operation to reduce the amount of necessary parameters.
 
 \begin{figure}
 	\centering
@@ -131,7 +130,7 @@ While interpretable models exist in machine learning, they are often outperforme
 
 \subsection{Decision Trees}
 Decisions trees provide an inherently interpretable model. Given data with features $a_1, ..., a_n$ a decision tree iteratively splits data according to conditions for each attribute. Splits occur for each attribute $a_i$ where samples from data are either above or below a given threshold for their values of $a_i$. Optimal splits can be found by learning algorithms or by expert knowledge. Nodes represent the resulting splits and edges represent the corresponding answer.
-Decision trees are a frequently used tool in data mining \cite{wu2008top}. Popular algorithms to generate decision trees from data include Iterative Dichotomiser 3 and C4.5, both suggested by Quinlan \cite{quinlan1986induction}, \cite{quinlan2014c4}.
+Decision trees are a frequently used tool in data mining \cite{wu2008top}. Popular algorithms to generate decision trees from data include Iterative Dichotomiser 3 and C4.5, both suggested by Quinlan \cite{quinlan1986induction,quinlan2014c4}.
 Another popular algorithm is Classification and Regression Trees, introduced by \citet{breiman1984classification}. The key concept behind these algorithms is to create splits that maximize information gain for each available attribute.\\
 In order to reduce size and increase interpretability of generated trees, pruning can be applied \cite{mingers1989empirical}. Pruning can also reduce the risk of overfitting (\cite{kearns1998fast}).
 
@@ -146,7 +145,6 @@ In order to reduce size and increase interpretability of generated trees, prunin
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=0.9\textwidth,height=0.16\textheight]{images/post.pdf}
-		
 		\caption{A Gaussian process is a distribution over the space of functions that describe data (blue).}
 	\end{minipage}
 \end{figure}
@@ -154,17 +152,17 @@ In order to reduce size and increase interpretability of generated trees, prunin
 
 
 \subsection{Leveraging Attributes}
-While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is by humans label the data according to characteristics suggested by domain experts. \citet{WahCUB_200_2011} let users label different kind of bird species according to attributes and collect them in the CUB dataset \cite{WahCUB_200_2011}. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
+While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is by humans label the data according to characteristics suggested by domain experts. \citet{WahCUB_200_2011} let users label different kind of bird species according to attributes and collect them in the CUB dataset. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
 Attributes can be used to create an interpretable output of a neural network. \citet{akata2013label} propose to learn a linear mapping between feature representations learned by a neural network and learned attribute representations.
 In other areas, attributes are used as well. \citet{kulkarni2013babytalk} and \citet{ordonez2011im2text} use attributes for image captioning. \citet{lampert2009learning} and \citet{palatucci2009zero} use attributes for zero-shot learning.
 
 
 \subsection{Multi-agent Communication}
-Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. 
+Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. Communication between two agents is also the basis for learning in the RDTC, proposed by \citet{alaniz2019explainable}, which our work builds on.
 
 \section{Uncertainty}
-Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. Aleatoric uncertainty arises from noise withing the data. If this noise is static (i.e. limited precision of a sensor) it is call homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty.\\
-On the other hand, a model can be aware of its own parameter's uncertainty. This uncertainty is called epistemic uncertainty and is high if a model has seen few data. By giving it more data, it can be reduced.
+Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. It compromises all kinds of noise inherent to the data. If this noise is static (i.e. limited precision of a sensor) it is call homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty.\\
+On the other hand, a model can also be uncertain about its own parameters. This uncertainty is called epistemic uncertainty and is high if a model has seen few data. By giving it more data, it can be reduced. Those two kinds of uncertainty are displayed for a computer vision task in Figure \ref{fig:uncertainty_example}.
 % image that shows the heteroscedastic and epistemic uncertainty
 \begin{figure}
 	\centering
@@ -172,6 +170,16 @@ On the other hand, a model can be aware of its own parameter's uncertainty. This
 	\caption{Areas with high aleatoric uncertainty are marked red. These are mostly due to occlusions in the image. The area in purple is due to high epistemic uncertainty, since the model has never seen a boat before. It misclassifies it as a car but is uncertain about this classification}
 	\label{fig:uncertainty_example}
 \end{figure}
+
+\subsection{Bayesian Inference}
+Applying Bayes' theorem to update conditional probabilities as more data becomes available is called Bayesian inference \cite{box2011bayesian}. Bayes' theorem was introduced by \citet{bayes1763lii} and is stated as
+\begin{align*}
+	p(a|b) = \frac{p(b|a) \cdot p(a)}{p(b)}.
+\end{align*}
+Intuitively put, it computes the posterior conditional probability of a random variable $a$ given the likelihood of $b$ being true, given $a$ is true ($p(b|a)$), a prior believe $p(a)$ and a marginalization term $p(b)$. Methods of Bayesian inference are popular in science and in machine learning (citation needed)
+
+
+
 
 \subsection{Variational Inference}\label{sec:vi}
 Methods of variational inference are used when intractable integrals are encountered in Bayesian inference \cite{jordan1999introduction}. Suppose, we want to find the predictive posterior $p(y^*|x^*, X,Y)$ for some datapoint $x^*$, we need to compute
@@ -246,7 +254,7 @@ Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and 
 
 \chapter{Uncertain RDTC} % aka Methods aka Architecture
 The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. Their common goal is to solve a classification task through communication. The Recurrent Decision Tree (RDT) agent has no direct access to data and can only ask question regarding the absence, presence or uncertainty of attributes. Given answers by the Attribute-based Learner (AbL) agent it can then store the answers thus incrementally building a decision tree that is used for the final classification. The learned decision three allows introspection.\\
-Based on their work, we propose a model, where the AbL is able to express its uncertainty for given attributes. We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'. 
+Based on their work, we propose a model, where the AbL is able to express its uncertainty for given attributes. We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{We provide a Pytorch implementation of our model at \url{github.com/wastedsummer/urdtc}}. 
 
 
 
@@ -421,14 +429,14 @@ and set hyperparameters $\tau$ and $l$ to appropriate values.
 	\begin{minipage}{0.45\textwidth}
 		\centering
 		\includegraphics[width=1\textwidth]{images/threshold_accuracy.pdf} 
-		\caption{Test accuracies, when removing uncertain attributes with different thresholds. Note, that here we used a model that was trained for 30 epochs and used max\_iters=20.}
+		\caption{Test accuracies, when removing uncertain attributes with different thresholds. Note, that here we used a model that was trained for 30 epochs and used max\_iters=20.\\\hspace{40pt}}
 		\label{fig:threshold_accuracies}
 	\end{minipage}\hfill
 	\begin{minipage}{0.45\textwidth}
 		\centering
-		%\includegraphics[width=0.8\textwidth,height=0.16\textheight]{}
+		%\includegraphics[width=1\textwidth]{images/zero_shot_attr_uncertainty.pdf}
 		\caption{...}
-		\label{fig:corr_matrix}
+		%\label{fig:unseen_attrs}
 	\end{minipage}
 \end{figure}
 After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{AttrMLP}$ such that every attribute's logit, where uncertainty is higher than a given threshold, is replaced with the tensor's minimum logit. This ensures, that the row-wise softmax cannot pick this logit as maximum.\\
@@ -501,6 +509,31 @@ In Figure \ref{fig:correlations} we can see that this is true and uncertain attr
 	\end{minipage}
 \end{figure}
 
+\section{Testing on Out-of-domain Data}\label{sec:zero_shot}
+An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty. We use a attribute-zero-shot setting, where we exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three.\\
+A classical zero-shot setting or a generalized zero shot setting (both described by \cite{8413121}) would not yield meaningful insights here. As in our proposed model, we only consider epistemic attribute uncertainty, uncertainty of classes should only depend on whether attributes attributes have been seen by the model and not whether classes have seen by the model, a possible weakness of our model, we further discuss in \ref{sec:attr_uncertainty}. We want to construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that posses 5 attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
+After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.
+We observe that the 24 classes, possessing unseen attributes have a overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that posses 5 attributes, never encountered during training. We observe, that the latter have a overall higher uncertainty.\\
+Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
+
+
+
+
+\begin{figure}[t!]
+	\centering
+	\begin{minipage}{0.45\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth]{images/zero_shot_class_uncertainty.pdf} 
+		\caption{Exponential maximum likelihood model for uncertainty per example. Examples from classes that have unseen attributes have higher attribute uncertainties.}
+		\label{fig:unseen_attr_classes}
+	\end{minipage}\hfill
+	\begin{minipage}{0.45\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth]{images/zero_shot_attr_uncertainty_hist.pdf}
+		\caption{Distribution of uncertainty values of seen and unseen attributes in zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more uncertain about attributes it has not encountered in the training set.}
+		\label{fig:unseen_attrs}
+	\end{minipage}
+\end{figure}
 
 
 \section{Results}\label{sec:results}
@@ -575,11 +608,12 @@ We evaluated different configurations of our model on the three datasets. We com
 	Attribute &  &  &  &  \\ 
 \end{tabular*}
 
-\section{Testing on Out-of-domain Data}
-An important aspect of our model is that it is not only self aware regarding uncertainty, but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty. We (1) use a zero shot setting where we get ood examples from unseen classes. Following \citet{8413121}, we exclude classes overlapping with ImageNet from our training data. We empirically evaluate whether our models yield significantly higher uncertainty for unseen classes during inference.
+
+
+
 
 \chapter{Discussion}
-In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty is useful in our setting and how we could alleviate remaining issues. We also take a look at a hypothetical example, on how uncertainty information could be used.
+Uncertainty estimation in deep learning is not trivial. It is an active topic of research and therefore subject of ongoing change and discussion. In Section \ref{sec:results}, we have seen that models utilizing uncertainty information are outperformed by models which do not. We will critically reflect on our work and discuss where the performance issues might stem from, whether epistemic uncertainty (that is only considering attributes) is useful in our setting and how we could alleviate remaining issues. We also take a look at a hypothetical example, on how uncertainty information could be used.
 
 
 \section{Reduced Performance with Uncertainty}
@@ -622,11 +656,16 @@ which is the diagonal of the expected outputs, subtracted by the product of the 
 \subsection{Risk versus Uncertainty}
 \citet{osband2016risk} suggests to distinct the variance arising from dropout neural networks, from actual uncertainty. He criticizes that the approximated posterior, which the mean and variance from multiple forward passes in a dropout network are equal to, according to \citet{gal2016dropout}, do not concentrate with more data available. According to him, this variance is rather associated with what is called risk in decision theory. There, the term risk refers to the inherent stochasticity of a model. However, this is what we previously introduced as epistemic uncertainty. This issue is thus rather about semanticity. We therefore acknowledge it but stick to the convention of differentiating between epistemic and aleatoric uncertainty.
 
+\subsection{Beyond Attribute Uncertainty}\label{sec:attr_uncertainty}
+As the only point, where uncertainty information is retrieved in our model is in the $f_{AttrMLP}$ which maps ResNet features to attributes, our model can only consider attribute uncertainty. Thus, as soon as an attribute is encountered in training, uncertainty decreases. This may be unhelpful in realistic scenarios, where an unknown class is encountered that can be described by a set of known attributes as such an example would not yield high uncertainty. Typical zero-shot settings would be such scenarios \cite{8413121}. Replacing $f_{ClassMLP}$ with a Dropout MLP and computing uncertainty there as well may potentially alleviate this issue and could allow further insights.
+
+
 
 
 \section{A Practical Example}
-We demonstrated a model that can tell the user reliably about its uncertainties in an explainable decision process. In a realistic setting this could provide users with valuable insights. Instead of only yielding the final classification and explanation tree, the model can also tell a user how uncertain it is about each part of the tree. If a user sees that the model was uncertain about several attributes it used, the user can take a second look.\\
-Let's consider an example where an ornithologist is tasked to create comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that shoots a picture of every bird it encounters. After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our UncertainRDTC and decides to use it on the data. For each image, the model yields a classification and an explanation. However, due to climate change some bird species that typically don't occur in the survey area have made their way into collected data. The model has never seen such birds that typically appear only much more south and thus is highly uncertain and yields following result:
+We demonstrated a model that can tell a user reliably about its uncertainties in an explainable decision process. In a realistic setting this could provide the user with valuable insights. Instead of only yielding the final classification and an explanation tree, the model can also tell the user how uncertain it is about each part of the tree. If the user sees that the model was uncertain about several attributes it used, classification could be done manually.\\
+Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that shoots a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually (2). Luckily, she has heard of our UncertainRDTC and decides to use it on the data. For each image, the model yields a classification and an explanation. However, due to climate change some bird species that typically don't occur in the survey area have made their way into collected data. The model has never seen such birds that typically appear only much more south and thus is highly uncertain and lets the ornithologist know (3). The ornithologist sees that the model is unaware of this species and therefore cannot reliably classify it. However, since she knows of this species she can quickly classify it manually.
+
 % ornithology example 
 \begin{figure}[h]
 	\centering
@@ -634,14 +673,11 @@ Let's consider an example where an ornithologist is tasked to create comprehensi
 	\caption{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually.}
 	\label{fig:qual}
 \end{figure}
-\\
-The ornithologist sees that the model is unaware of this species and therefore cannot reliably classify it. However, since she knows of this species she can quickly classify it manually.
-
 
 \section{Carbon Footprint Estimation}
 % devices
 To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact, of the $CO_2$ emissions caused by producing the required electricity, on the world's climate.
-The GPUs provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which at full capacity operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
+The GPUs provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which, at full capacity, operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
 % epochs
 While no single model was trained for more than $50$ epochs, if we consider all models and all iterations of models, we accumulate about $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs, we have consumed $200h * 300\;kW = 60000\;kWh$ of power.\\
 % co equivalent
@@ -654,8 +690,11 @@ The German federal office for environmental concerns (Umweltbundesamt) estimates
 Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes, provided as side information. The nodes of the resulting tree correspond to attributes, and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree, or extend it to a ternary decision tree, where '?' is an additional option.\\
 While our proposed extension does not outperform the original aRDTC model, our remRDTC and extRDTC still outperform other explainable methods such as decision trees or dNDF. Moreover, the performance is comparable to that of uninterpretable state of the art methods, such as ResNet.\\
 Our model does not only utilize uncertainty information but also allows introspection. We use this to further investigate the relationship between attribute usage, misclassification and uncertainty.
-We empirically show that our model (hopefully) reliable yields high uncertainty for ood examples. This would allow the model to consult a human user in cases of high uncertainty, thus making it more applicable in real-world scenarios.
+We empirically show that our model (hopefully) reliable yields high uncertainty for unseen attributes. This would allow the model to consult a human user in cases of high uncertainty, thus making it more applicable in real-world scenarios.
 Finally, we critically reflect the weaknesses of the model and propose possible improvements for future work.
+
+
+
 \bibliographystyle{alpha}
 \bibliography{bibliography}
 
@@ -663,7 +702,7 @@ Finally, we critically reflect the weaknesses of the model and propose possible 
 
 
 \chapter*{Acknowledgments}
-I would like to thank my pet snake, which sleeps all day, and my mother, who is the hardest working person I know.
+I would like to thank my pet snake, which sleeps all day, and my mother, who is the hardest working person I know. I would like to thank Zeynep and Stephan for the continuous support, their critical questions, and helpful insights.
 
 
 
