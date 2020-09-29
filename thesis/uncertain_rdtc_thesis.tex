@@ -172,11 +172,11 @@ On the other hand, a model can also be uncertain about its own parameters. This 
 \end{figure}
 
 \subsection{Bayesian Inference}
-Applying Bayes' theorem to update conditional probabilities as more data becomes available is called Bayesian inference \cite{box2011bayesian}. Bayes' theorem was introduced by \citet{bayes1763lii} and is stated as
+Applying Bayes' theorem to update prior beliefs as more data becomes available is called Bayesian inference \cite{box2011bayesian}. Bayes' theorem was introduced by \citet{bayes1763lii} and is stated as
 \begin{align*}
 	p(a|b) = \frac{p(b|a) \cdot p(a)}{p(b)}.
 \end{align*}
-Intuitively put, it computes the posterior conditional probability of a random variable $a$ given the likelihood of $b$ being true, given $a$ is true ($p(b|a)$), a prior believe $p(a)$ and a marginalization term $p(b)$. Methods of Bayesian inference are popular in science and in machine learning (citation needed)
+Intuitively put, it computes the posterior conditional probability of a random variable $a$ given, the likelihood of $b$ being true, given $a$ is true: $p(b|a)$, a prior believe $p(a)$ and a marginalization term $p(b)$. Methods of Bayesian inference are popular in different fields of science, such as neurology, psychology, medicine, epidemiology, geography and machine learning \cite{friston2002classical,wagenmakers2018bayesian,koch2006bayesian,parmigiani2002modeling,didelot2014bayesian,ghahramani2015probabilistic}. They can be used to incorporate prior knowledge, multiple sources of evidence, or, in general, construct large joint probability density functions \cite{Spiegelhalter:2009}.
 
 
 
@@ -311,12 +311,6 @@ How much each loss contributes to the total loss can be determined by hyperparam
 
 \section{Uncertainty}
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.9\textwidth]{images/f_attrMLP.pdf} 
-	\caption{We used both BatchNorm and dropout layers for $f_{attrMLP}$.}
-	\label{fig:f_attrMLP}
-\end{figure}
 
 Uncertainty information is a crucial part of robust vision systems. In safety critical application, it could be avoided that the model uses high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely ood data), the model could decide to consult a human instead of making an overconfident classification.\\
 Uncertainty comes either from variance in data (aleatoric uncertainty) or from variance in model parameters (epistemic uncertainty). Thus, there is an inherent relationship between variance and uncertainty.
@@ -338,9 +332,6 @@ Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\r
 
 
 
-\subsection{Getting Uncertainty Information}
-We tested different configurations for $f_{AttributeMLP}$ and using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. This setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proved by \citet{gal2016dropout}, this is equal to epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty. 
-After retrieving uncertainty information, we either replace logits of attributes with high uncertainty with $min(logits)$ so they can not be picked by the softmax or they are denoted with a $1$ in a extended decision tensor. We refer to the first strategy as removing uncertain attributes (remRDTC) and the latter as extended vocabulary (ext(RDTC)).
 
 
 
@@ -420,27 +411,46 @@ To recover the dropout objective from Eq. \ref{eq:dropout}, we can scale it by a
 and set hyperparameters $\tau$ and $l$ to appropriate values.
 
 
-
-
-
-\subsection{Removing Uncertain Attributes}
-\begin{figure}[t!]
+\subsection{Getting Uncertainty Information}
+\begin{figure}
 	\centering
-	\begin{minipage}{0.45\textwidth}
-		\centering
-		\includegraphics[width=1\textwidth]{images/threshold_accuracy.pdf} 
-		\caption{Test accuracies, when removing uncertain attributes with different thresholds. Note, that here we used a model that was trained for 30 epochs and used max\_iters=20.\\\hspace{40pt}}
-		\label{fig:threshold_accuracies}
-	\end{minipage}\hfill
-	\begin{minipage}{0.45\textwidth}
-		\centering
-		%\includegraphics[width=1\textwidth]{images/zero_shot_attr_uncertainty.pdf}
-		\caption{...}
-		%\label{fig:unseen_attrs}
-	\end{minipage}
+	\includegraphics[width=0.9\textwidth]{images/f_attrMLP.pdf} 
+	\caption{We used both BatchNorm and dropout layers for $f_{attrMLP}$.}
+	\label{fig:f_attrMLP}
 \end{figure}
-After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{AttrMLP}$ such that every attribute's logit, where uncertainty is higher than a given threshold, is replaced with the tensor's minimum logit. This ensures, that the row-wise softmax cannot pick this logit as maximum.\\
-We tested this strategy both in test-only and in training and testing stage. When using it in the test stage for a model, that was trained regularly (without uncertainty information), the model suffered severe performance drops, displayed in Figure \ref{fig:threshold_accuracies}. Especially, for low cut-off thresholds. It never outperforms a model that keeps all attributes. We hypothesize that this is due to actively removing options from a pool of attributes, that the model is already well adapted to and as shown in Figure \ref{fig:less_attrs} rarely misclassifies despite being uncertain.
+We tested different configurations for $f_{AttributeMLP}$ and using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. This setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout}, this is equal to epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty. 
+After retrieving uncertainty information, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy remove uncertain attributes (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in a extended decision tensor. We refer to  as extended vocabulary (extRDTC).
+
+
+\subsection{Removing Uncertain Attributes}\label{sec:remRDTC}
+%\begin{figure}[t!]
+%	\centering
+%	\begin{minipage}{0.45\textwidth}
+%		\centering
+%		\includegraphics[width=1\textwidth]{images/threshold_accuracy.pdf} 
+%		\caption{Test accuracies, when removing uncertain attributes with different thresholds. Note, that here we used a model that was trained for 30 epochs and used max\_iters=20.\\\hspace{40pt}}
+%		\label{fig:threshold_accuracies}
+%	\end{minipage}\hfill
+%	\begin{minipage}{0.45\textwidth}
+%		\centering
+%		\includegraphics[width=1\textwidth]{images/remove_attrs.pdf}
+%		\caption{...}
+%		\label{fig:remove_intuition}
+%	\end{minipage}
+%\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/remove_attrs.pdf} 
+	\caption{In selection logits, the output from $f_{QuestMLP}$, we replace values at indices where uncertain attributes are with a $-inf$ value. This assures that this attribute can never be picked as $c_t$ by the Gumbel softmax.}
+	\label{fig:remove_intuition}
+\end{figure}
+
+%TODO rewrite
+After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{QuestMLP}$ so that at each index, where a uncertain attribute is, the selection logit tensor has a -inf value. This ensures that this attribute cannot be picked by the Gumbel softmax. In turn, no uncertain attribute can be picked as index and therefore cannot be posed as a question to the AbL.\\
+In order to prevent the model from misusing uncertainty information, we have to ensure that the model does not get any gradients where uncertain attributes are.
+
+%We tested this strategy both in test-only and in training and testing stage. When using it in the test stage for a model, that was trained regularly (without uncertainty information), the model suffered severe performance drops, displayed in Figure \ref{fig:threshold_accuracies}. Especially, for low cut-off thresholds. It never outperforms a model that keeps all attributes. We hypothesize that this is due to actively removing options from a pool of attributes, that the model is already well adapted to and as shown in Figure \ref{fig:less_attrs} rarely misclassifies despite being uncertain.
+
 
 
 \subsection{Extending the Vocabulary}
@@ -464,7 +474,8 @@ When using this strategy in training, we need to make sure, that no gradients ac
 \end{figure}
 
 
-
+\subsection{Random Attribute Removal}
+Similar to the remRDTC strategy, described in Subsection \ref{sec:remRDTC}, we prevent the RDT from asking questions. However, instead of blocking indices where uncertain attributes are, we randomly generate a tensor and block indices based on it. The probability of an index being blocked is similar to the probability of an attribute being deemed uncertain to allow fair comparison.
 
 
 \chapter{Experiments}
