@@ -82,7 +82,7 @@ However, these methods still failed to establish far beyond the realm of researc
 
 
 \subsection{Multilayer Perceptron}\label{sec:MLP}
-The MLP is a rather simple architecture. It consists of an input layer, an arbitrary number of hidden layers and an output layer. Each neuron is typically connected to each neuron in the next layer. Thus each neuron gets the weighted output from the last layer's neurons as input. Non-linear activation functions allow the network to learn not linearly separable problems. 
+The MLP is a rather simple architecture. It consists of an input layer, an arbitrary number of hidden layers and an output layer. Each neuron is typically connected to each neuron in the next layer through weighted connections. Thus each neuron gets the weighted output from the last layer's neurons as input. Non-linear activation functions allow the network to learn not linearly separable problems. Their rather simple structure and effectiveness makes them a widely used tool \cite{beale1990neural}. In the RDTC model $f_{AttrMLP}$, $f_{QuestMLP}$, and $f_{ClassMLP}$ are used to lean mappings from the complex output of other models to a simpler structure, that can i.e. be interpreted by a human. For example from ResNet features to attributes.
 
 
 \begin{figure}
@@ -90,12 +90,12 @@ The MLP is a rather simple architecture. It consists of an input layer, an arbit
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=0.8\textwidth,height=0.21\textheight]{images/mlp.pdf} 
-		\caption{A MLP can consists of an input layer, an arbitrary number of hidden layers, and an output layer.}
+		\caption{A MLP can consists of an input layer, an arbitrary number of hidden layers, and an output layer. Hidden layers typically have non-linear activation functions.}
 	\end{minipage}\hfill
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=0.9\textwidth,height=0.20\textheight]{images/rnn.pdf}
-		\caption{The recurrent neural network takes in an input for every time step as well as its own hidden state.}
+		\caption{The recurrent neural network takes in an input for every time step. Additionally it takes in its own hidden state from the last time step and computes an output for each time step.}
 		\label{fig:rnn}
 	\end{minipage}
 \end{figure}
@@ -110,16 +110,18 @@ The  RNN takes in an input $in_t$ which is transformed by weight matrix $u$ and 
 	h_t &= f_{act}(u \circ in_t + w \circ h_{t-1})\\
 	out_t &=f_{act}(v \circ h_t)
 \end{align}
-A RNN can be trained by the Backpropagation through time algorithm (BPTT). \citet{werbos1990backpropagation} propose to unfold a RNN for each time step or element of the input. This unfolding makes it equivalent to a feed-forward ANN (such as the MLP introduced in Subsection \ref{sec:MLP}) and weights can be adjusted according to the gradients.
+A RNN can be trained by the Backpropagation through time algorithm (BPTT). \citet{werbos1990backpropagation} propose to unfold a RNN for each time step or element of the input. This unfolding makes it equivalent to a feed-forward ANN (such as the MLP introduced in Subsection \ref{sec:MLP}) and weights can be adjusted according to the gradients.\\
+As basic RNN structures suffer from vanishing and exploding gradient problems \cite{bengio1994learning}, several improvements have been proposed such as the LSTM \cite{hochreiter1997long} and the Gated recurrent unit (GRU)\cite{cho2014learning}.
+The RDTC model relies on a LSTM to classify the decision tree which updates its depth after each question is asked and answered and thus could not be classified by a MLP.
 
 
 \subsection{Convolutional Neural Networks}
-CNNs have proven to be useful tool for various image related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers with the intention of learning to recognize low level concepts such as edges in layers close to the input layer and high level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled, using a pooling operation to reduce the amount of necessary parameters.
+CNNs have proven to be useful tool for various image related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers with the intention of learning to recognize low level concepts such as edges in layers close to the input layer and high level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled, using a pooling operation to reduce the amount of necessary parameters. The AbL agents uses a convolutional neural net to learn features from images.
 
 \begin{figure}
 	\centering
 		\includegraphics[width=0.9\textwidth]{images/convnet.pdf} 
-		\caption{A CNN with two convolutional and subsampling layers which can be repeated arbitrary times.}
+		\caption{A CNN with two convolutional and subsampling layers. A fully connected layer transforms the learned features into a human interpretable output. The displayed structures can be repeated an arbitrary number of times. Modern convolutional architectures may have have a large number of layers \cite{he2016deep,szegedy2015going,xie2017aggregated}.}
 		\label{fig:convnet}
 \end{figure}
 
@@ -132,7 +134,8 @@ While interpretable models exist in machine learning, they are often outperforme
 Decisions trees provide an inherently interpretable model. Given data with features $a_1, ..., a_n$ a decision tree iteratively splits data according to conditions for each attribute. Splits occur for each attribute $a_i$ where samples from data are either above or below a given threshold for their values of $a_i$. Optimal splits can be found by learning algorithms or by expert knowledge. Nodes represent the resulting splits and edges represent the corresponding answer.
 Decision trees are a frequently used tool in data mining \cite{wu2008top}. Popular algorithms to generate decision trees from data include Iterative Dichotomiser 3 and C4.5, both suggested by Quinlan \cite{quinlan1986induction,quinlan2014c4}.
 Another popular algorithm is Classification and Regression Trees, introduced by \citet{breiman1984classification}. The key concept behind these algorithms is to create splits that maximize information gain for each available attribute.\\
-In order to reduce size and increase interpretability of generated trees, pruning can be applied \cite{mingers1989empirical}. Pruning can also reduce the risk of overfitting (\cite{kearns1998fast}).
+In order to reduce size and increase interpretability of generated trees, pruning can be applied \cite{mingers1989empirical}. Pruning can also reduce the risk of overfitting (\cite{kearns1998fast}).\\
+The RDTC build a decision tree by asking questions about the presence of attributes in a given image. Questions by the RDT can be viewed as a nodes and the AbL's answers as edges.
 
 \begin{figure}
 	\centering
@@ -152,13 +155,14 @@ In order to reduce size and increase interpretability of generated trees, prunin
 
 
 \subsection{Leveraging Attributes}
-While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is by humans label the data according to characteristics suggested by domain experts. \citet{WahCUB_200_2011} let users label different kind of bird species according to attributes and collect them in the CUB dataset. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
+While decision trees are suitable for tabular data, applying them on image data is not trivial. Images are parameterized by pixels rather than attributes, so attributes have to be provided as side information. Ideally, those attributes should correspond to features that characterize classes found in the image data. Therefore, a popular way of acquiring side information is through human labeling of data according to characteristics suggested by domain experts. \citet{WahCUB_200_2011} let users label different kind of bird species according to attributes and collect them in the CUB dataset. Another dataset containing attributes as side information is proposed by \citet{8413121}.\\
 Attributes can be used to create an interpretable output of a neural network. \citet{akata2013label} propose to learn a linear mapping between feature representations learned by a neural network and learned attribute representations.
 In other areas, attributes are used as well. \citet{kulkarni2013babytalk} and \citet{ordonez2011im2text} use attributes for image captioning. \citet{lampert2009learning} and \citet{palatucci2009zero} use attributes for zero-shot learning.
 
 
 \subsection{Multi-agent Communication}
-Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. Communication between two agents is also the basis for learning in the RDTC, proposed by \citet{alaniz2019explainable}, which our work builds on.
+Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols which can be used by a second agent to solve a problem. Multi-agent communication has also been used for the purpose of creating interpretable outputs by \citet{rodriguez2019modeling} who take in account that different agents may have differing understanding of concepts. Communication between two agents is also the basis for learning in the RDTC.
+
 
 \section{Uncertainty}
 Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. It compromises all kinds of noise inherent to the data. If this noise is static (i.e. limited precision of a sensor) it is call homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty.\\
@@ -167,9 +171,10 @@ On the other hand, a model can also be uncertain about its own parameters. This 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.9\textwidth]{images/uncertainty_example.png} 
-	\caption{Areas with high aleatoric uncertainty are marked red. These are mostly due to occlusions in the image. The area in purple is due to high epistemic uncertainty, since the model has never seen a boat before. It misclassifies it as a car but is uncertain about this classification}
+	\caption{Areas with high aleatoric uncertainty are marked red. These are mostly due to occlusions in the image. The area in purple is due to high epistemic uncertainty, since the model has never seen a boat before. It misclassifies it as a car but is uncertain about this classification.}
 	\label{fig:uncertainty_example}
 \end{figure}
+
 
 \subsection{Bayesian Inference}
 Applying Bayes' theorem to update prior beliefs as more data becomes available is called Bayesian inference \cite{box2011bayesian}. Bayes' theorem was introduced by \citet{bayes1763lii} and is stated as
@@ -177,8 +182,6 @@ Applying Bayes' theorem to update prior beliefs as more data becomes available i
 	p(a|b) = \frac{p(b|a) \cdot p(a)}{p(b)}.
 \end{align*}
 Intuitively put, it computes the posterior conditional probability of a random variable $a$ given, the likelihood of $b$ being true, given $a$ is true: $p(b|a)$, a prior believe $p(a)$ and a marginalization term $p(b)$. Methods of Bayesian inference are popular in different fields of science, such as neurology, psychology, medicine, epidemiology, geography and machine learning \cite{friston2002classical,wagenmakers2018bayesian,koch2006bayesian,parmigiani2002modeling,didelot2014bayesian,ghahramani2015probabilistic}. They can be used to incorporate prior knowledge, multiple sources of evidence, or, in general, construct large joint probability density functions \cite{Spiegelhalter:2009}.
-
-
 
 
 \subsection{Variational Inference}\label{sec:vi}
@@ -207,7 +210,7 @@ that is optimized in respect to to parameters $\theta$. Here, $p(w)$ is a prior 
 Gaussian processes are a powerful, generative model that can be applied to a variety of machine learning tasks \cite{mackay1998introduction}. They build on the notion that data can be described by (possibly infinitely) many functions. Gaussian processes (GPs) assign probabilities to functions that describe given data. Starting with a prior distribution over functions a GP returns a posterior over the space of functions, given new data. Of course, distributions over functions are somewhat hard to define. Therefore, we will view a function $f(x)$ as a vector where the $x$ denotes the index that will retrieve the function value at this point. Now, a GP is a joint normal distribution over the points of this vector, defined by a mean function $\mu(x)$ and a covariance function $\Sigma(x)$ with $\Sigma(x) = \Sigma_{ij} = k(x_i,x_j)$. The kernel function $k$ has to return a positive definite matrix and should return a high output for similar $x_i$ and $x_j$.\\
 GPs thus view each $x_i$ as a random variable, that is dependent on all other $x_j\neq x_i$.\\
 To perform inference in a GP, one simply takes the conditional probability density distribution (PDF) of a given $x_i$ conditioned on all other $x_j\neq x_i$. Since Gaussian distributions are closed under conditioning, the resulting PDF is Gaussian as well.\\
-To retrieve a meaningful posterior from a GP, it has to be trained in a supervised fashion. We will describe the necessary steps in pseodocode.
+To retrieve a meaningful posterior from a GP, it has to be trained in a supervised fashion. We will describe the key steps in pseudocode.
 
 \begin{algorithm}[ht]
 \setlength{\leftskip}{4mm}
@@ -235,13 +238,9 @@ $f_{posterior}$ = $\mu$ + $L \cdot \mathcal{N}(dim=(n, num\_samples);0,1)$\\
 
 
 
-\subsection{Modeling Uncertainty in Neural Networks} %TODO maybe more motivation (with example)
-%Alternative title: Dropout Variational Inference
-Deep neural networks (DNNs) are applied in safety critical processes where information about a model's uncertainty is of crucial importance \cite{najafabadi2015deep}, \cite{krzywinski2013importance}. Standard DNN's however do not yield uncertainty information. Bayesian neural networks (BNNs) are an architecture that can model uncertainty reliably \cite{mullachery2018bayesian}. However, they require modeling a probability density function over each parameter which causes a high computational cost. A method using variance arising from dropout has been proposed by \citet{gal2016dropout} who proofed dropout in neural networks is equal to Monte-Carlo integration in GPs and thus can be used to model epistemic uncertainty.\\
-%TODO proof here?
-
-
-
+\subsection{Dropout Variational Inference} %TODO maybe why softmax does not yield 
+%Alternative title: Modeling Uncertainty in Neural Networks
+Deep neural networks (DNNs) are applied in safety critical processes where information about a model's uncertainty is of crucial importance \cite{najafabadi2015deep,krzywinski2013importance}. Standard DNN's however do not yield uncertainty information. Bayesian neural networks (BNNs) are an architecture that can model uncertainty reliably \cite{mullachery2018bayesian}. However, they require modeling a probability density function over each parameter which causes high computational costs. A method using variance arising from dropout has been proposed by \citet{gal2016dropout} who proofed that dropout in neural networks is equal to Monte-Carlo integration in GPs and thus can be used to model epistemic uncertainty.\\
 With a GP, we want to find a posterior distribution over function that explain given data. We can view a finite model like a neural network as an approximation to a GP \cite{damianou2013deep}. Thus, by optimizing a model, we minimize the Kullbach-Leibler (KL) divergence between our finite model and the corresponding GP \cite{gal2016dropout}. In practice, however, the GP's posterior often requires computing intractable integrals. To alleviate this, methods of variational inference, such as Monte-Carlo integration are applied. Monte-Carlo integration in a GP corresponds to averaging forward passes in a dropout neural net. According to \citet{gal2016dropout}, the resulting variance can be views as the model's uncertainty.
 \\
 Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and epistemic uncertainty in a unified approach. For classification tasks, this has been simplified by \citet{kwon2020uncertainty}.
