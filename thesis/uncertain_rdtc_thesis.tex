@@ -314,7 +314,7 @@ How much each loss contributes to the total loss can be determined by hyperparam
 Uncertainty information is a crucial part of robust vision systems. In safety critical application, it could be avoided that the model uses high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely ood data), the model could decide to consult a human instead of making an overconfident classification.\\
 Uncertainty comes either from variance in data (aleatoric uncertainty) or from variance in model parameters (epistemic uncertainty). Thus, there is an inherent relationship between variance and uncertainty.
 %To get an intuition of the relationship between uncertainty and variance, let us have look at the basic equation for variance.
-The variance of a random variable, which is in our case the variational predictive distribution $p(\hat{y} | x)$ with $y\sim p(\hat{y} | x)$, is defined as:
+The variance of a random variable, which in our case is the variational predictive distribution $p(\hat{y} | x)$ with $y\sim p(\hat{y} | x)$, is defined as:
 \begin{align}
 	Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[ (y-\mathbb{E}\left[ y\right])^2 \right]\\
 	&= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\right]\mathbb{E}_q\left[y\right]^T.
@@ -440,7 +440,7 @@ After retrieving uncertainty information, we replace selection logits from $f_{Q
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/remove_attrs.pdf} 
-	\caption{In selection logits, the output from $f_{QuestMLP}$, we replace values at indices where uncertain attributes are with a $-inf$ value. This assures that this attribute can never be picked as $c_t$ by the Gumbel softmax.}
+	\caption{In selection logits, the output from $f_{QuestMLP}$, we replace values at indices where uncertain attributes (orange) are, with a $-inf$ value. This assures that this attribute can never be picked as $c_t$ by the Gumbel softmax.}
 	\label{fig:remove_intuition}
 \end{figure}
 
@@ -486,15 +486,15 @@ We test our model on image datasets that provide attributes as side information.
 %TODO describe datasets in more detail
 AwA2 is a set of 37,322 images that can be subdivided into 50 different classes of animals. Human annotators were tasked to label each image, choosing from 85 available attributes that describe each animal class. The aPY dataset provides 15,339 images, annotated with 64 different attributes that describe each of the 32 classes. Finally, the most challenging dataset is CUB. Here, the task is to classify 11,788 different images into 200 different classes. For this task, each images is annotated with 312 descriptive attributes.
 
+%\begin{figure}[t!]
+%	\centering
+%	\includegraphics[width=1\textwidth]{images/attr_heatmap.png} 
+%	\caption{Normalized attributes misclassification frequency, uncertainty and usage. Only a small subsets of attributes is actually used by the model.}
+%	\label{fig:all_attrs}
+%\end{figure}
 \begin{figure}[t!]
 	\centering
-	\includegraphics[width=1\textwidth]{images/attr_heatmap.png} 
-	\caption{Normalized attributes misclassification frequency, uncertainty and usage. Only a small subsets of attributes is actually used by the model.}
-	\label{fig:all_attrs}
-\end{figure}
-\begin{figure}[t!]
-	\centering
-	\includegraphics[width=1\textwidth]{images/attr_heatmap_short.png} 
+	\includegraphics[width=1\textwidth]{images/attr_heatmap_short.pdf} 
 	\caption{Here, we only show normalized attributes misclassification frequency, uncertainty and usage for attributes that are used by the model.}
 	\label{fig:less_attrs}
 \end{figure}
@@ -507,13 +507,13 @@ In Figure \ref{fig:correlations} we can see that this is true and uncertain attr
 	\centering
 	\begin{minipage}{0.45\textwidth}
 		\centering
-		\includegraphics[width=1\textwidth,height=0.16\textheight]{images/error_sigma_corr_all.png} 
+		\includegraphics[width=1\textwidth]{images/error_sigma_corr_all.pdf} 
 		\caption{...}
 		\label{fig:correlations}
 	\end{minipage}\hfill
 	\begin{minipage}{0.45\textwidth}
 		\centering
-		\includegraphics[width=0.8\textwidth,height=0.16\textheight]{images/corr_matrix.png}
+		\includegraphics[width=1\textwidth]{images/corr_matrix.pdf}
 		\caption{...}
 		\label{fig:corr_matrix}
 	\end{minipage}
