@@ -252,15 +252,15 @@ Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and 
 
 
 \chapter{Uncertain RDTC} % aka Methods aka Architecture
-The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. Their common goal is to solve a classification task through communication. The Recurrent Decision Tree (RDT) agent has no direct access to data and can only ask question regarding the absence, presence or uncertainty of attributes. Given answers by the Attribute-based Learner (AbL) agent it can then store the answers thus incrementally building a decision tree that is used for the final classification. The learned decision three allows introspection.\\
-Based on their work, we propose a model, where the AbL is able to express its uncertainty for given attributes. We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{We provide a Pytorch implementation of our model at \url{github.com/wastedsummer/urdtc}}. 
+The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. A Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask question regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision three allows introspection.\\
+Based on their work, we propose a model, where the AbL is aware and able to express its uncertainty for given attributes (See Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
 
 
 
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/uncertaintRDTC.pdf} 
-	\caption{The RDT agent asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL agent are used by the RDT agent to make a classification each iteration.}
+	\caption{The RDT asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL are used by the RDT agent to make a classification each iteration.}
 	\label{fig:uncertainRDTC}
 \end{figure}
 
@@ -269,25 +269,32 @@ Before we introduce our modifications to the RDTC model, we will give a detailed
 
 %TODO intro
 \subsection{Communication}
-The two agents communicate to each other through discrete values. For a given image, the AbL returns a an answer $\hat{a}$ that is a tensor with binary values with size $\text{number of attributes} \times \text{decision size}$. The intention behind using only binary values in the AbL's answer is increased interpretability. Each row in this tensor indicates the presence/absence of an attribute and the columns correspond to the decision options 'Yes' or 'No'. Strictly speaking, the AbL thus answers all possible questions the RDT can ask,in advance to any questions. 
+The two agents communicate to each other through discrete messages. For a given image $x$, the AbL returns a an answer $\hat{a}$ that is a tensor with binary values with size $\text{number of attributes} \times \text{decision size}$. The intention behind using only binary values in the AbL's answer is increased interpretability. Each row in this tensor indicates the presence/absence of an attribute and the columns correspond to the decision options 'Yes' or 'No'. Strictly speaking, the AbL thus answers all possible questions the RDT can ask, in advance to any questions.\\
 The RDT is then able to ask questions through posing an index $c_t$. By accessing the AbL's answer at this index it receives answer $d_t = \hat{a}[d_t]$. This information then used to build an internal decision tree, used for a classification output and to come up with a new question. In the following, we will go over each agent in more detail and explain how this model is trained.
 
 
 \subsection{AbL}
-The AbL agent is a vision model, consisting of a CNN and a MLP. The CNN learns image features and the MLP learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax. The output is a tensor $p(\hat{a}|z)$ with shape $number\_attributes \times decision\_size$. This corresponds to a probability distribution over the decision option for each attribute. In order to get an interpretable, binary response, in the forward pass, the result of the softmax is put through an arg max function. This is, however, not differentiable. In the backward pass it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes by indexing.
+The AbL agent is a vision model, consisting of a CNN and a MLP. The CNN learns image features and the MLP learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax with temperature (TempSoftmax, See Eq. \ref{eq:tempsoftmax}). The output is a tensor $p(\hat{a}|z)$ with shape $number\_attributes \times decision\_size$. This corresponds to a probability distribution over the decision option for each attribute. In order to get an interpretable, binary response, in the forward pass, the result of the TempSoftmax is put through an arg max function. This is, however, not differentiable. In the backward pass it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes by indexing.
+
+\begin{align}\label{eq:tempsoftmax}
+&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = d_t,\\
+\text{ where }
+log\;\pi &\text{ are the logit values for either 'yes', or 'no' per attribute.}%&=log\;p(c_t|h_{t-1})\text{ , and thus:}
+%c_t &= GumbelSoftmax(log\;p(c_t|h_{t-1})).
+\end{align}
 
 
 \subsection{RDT}
-The RDT agent consists of several models. At its core lies an Long-short Term Memory (LSTM). This recurrent model allows the RDT to come up with new questions, based on it's hidden state $h_{t-1}$ from the last (or initial) communication step.\\
-The $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttributeMLP}$. The output of $f_{QuestMLP}$ is a categorical distribution $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$. In order to get an actual index, the final output needs to be discrete. Thus we need to sample from this categorical distribution. This is done via the Gumbel softmax function:
+The RDT agent consists of several models. At its core lies a Long-short Term Memory (LSTM). This recurrent model allows the RDT to come up with new questions, based on it's hidden state $h_{t-1}$ from the last (or initial) communication step.\\
+The $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttributeMLP}$. The output of $f_{QuestMLP}$ are logit values $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$. In order to get an actual index, the final output needs to be discrete. Thus we need to turn the logit values into a categorical distribution and sample from it. This is done via the Gumbel softmax function \cite{jang2016categorical}:
 \begin{align}
 		GumbelSoftmax(log\;\pi) &= \frac{exp((log\;\pi_i + g_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j + g_j)/\tau)}\text{ , where}\\
-			log\;pi &=log\;p(c_t|h_{t-1})\text{ , and thus:}\\
+			log\;\pi &=log\;p(c_t|h_{t-1})\text{ , and thus:}\\
 			c_t &= GumbelSoftmax(log\;p(c_t|h_{t-1})).
 \end{align}
-where for $\tau \rightarrow 0$, the distribution approaches a one-hot vector with a $1$ at the maximum of the categorical distribution and $0$ everywhere else.\\ 
-The resulting scalar $c_t$ then can be used to index $\hat{a}$. The response is $d_t$ which indicates absence, presence or uncertainty of the attribute at index $c_t$. Question $c_t$ and answer $d_t$ then update explicit memory $\mathcal{M}^{(t)} = \mathcal{M}^{(t-1)} \oplus (c_t, d_t)$. Note that during test time, rather than sampling $c_t$, the index with the highest probability is chosen.\\
-The explicit memory $\mathcal{M}^{(t)}$, $c_t$, $d_t$ and the LSTM's last hidden state $h_{t-1}$ are then used to computer the current hidden state $h_t$, which is then, in turn, used by the $f_{QuestMLP}$ again to pose a new question.\\
+where for $\tau \rightarrow 0$, the distribution approaches a one-hot vector with a $1$ at the maximum of the categorical distribution and $0$ everywhere else, turning it into a sample, effectively.\\
+The resulting tensor $c_t$ then can be used to index $\hat{a}$. The response is $d_t$ which indicates absence, presence (or other possible answers) of the attribute at index $c_t$. Question $c_t$ and answer $d_t$ then update the explicit memory $\mathcal{M}^{(t)} = \mathcal{M}^{(t-1)} \oplus (c_t, d_t)$. Note that during test time, rather than sampling $c_t$, the index with the highest probability is chosen through an argmax because it does not need to be differentiable.\\
+The explicit memory $\mathcal{M}^{(t)}$, $c_t$, $d_t$ and the LSTM's last hidden state $h_{t-1}$ are then used to compute the current hidden state $h_t$, which is then, in turn, used by the $f_{QuestMLP}$ to pose a new question.\\
 The explicit memory $\mathcal{M}^{(t)}$ is also the basis for the class prediction. An additional MLP, the $f_{ClassMLP}$ returns class probabilities $\hat{y}_t$ based on  $\mathcal{M}^{(t)}$ for every communication step:
 \begin{align}
 	\hat{y}_t = f_{ClassMLP( \mathcal{M}^{(t)})}.
@@ -299,7 +306,7 @@ Ideally, the model should come to a classification in as few communication steps
 \begin{align}
 	\mathcal{L} = \frac{1}{T} \sum_{t=1}^{T}\mathcal{L}_{CE}(y, \hat{y}_t) = - \frac{1}{T}\sum_{t=1}^{T}\sum_{i}y_i \cdot log\;\hat{y}_{t,i}.
 \end{align}
-This ensures, that the lower the number of time steps $T$, the lower the whole term and thus the lower the loss.\\
+This ensures, that the lower the number of time steps $T$, the lower the whole term and thus, the lower the loss.\\
 Besides the classification loss, an additional attribute loss can be leveraged in order to encourage learning attributes that correspond to provided human annotated side information.
 \begin{align}
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
@@ -308,10 +315,9 @@ How much each loss contributes to the total loss can be determined by hyperparam
 
 
 
+
 \section{Uncertainty}
-
-
-Uncertainty information is a crucial part of robust vision systems. In safety critical application, it could be avoided that the model uses high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely ood data), the model could decide to consult a human instead of making an overconfident classification.\\
+Uncertainty information is a crucial part of robust vision systems. In safety critical application, it could be used to prevent the model from using high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely ood data), the model could decide to consult a human instead of making an overconfident classification.\\
 Uncertainty comes either from variance in data (aleatoric uncertainty) or from variance in model parameters (epistemic uncertainty). Thus, there is an inherent relationship between variance and uncertainty.
 %To get an intuition of the relationship between uncertainty and variance, let us have look at the basic equation for variance.
 The variance of a random variable, which in our case is the variational predictive distribution $p(\hat{y} | x)$ with $y\sim p(\hat{y} | x)$, is defined as:
@@ -329,20 +335,15 @@ Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\r
 
 
 
-
-
-
-
-
-\subsection{Estimating Epistemic Uncertainty with Dropout Neural Networks}
+\subsection{Estimating Epistemic Uncertainty with Dropout Neural Networks}\label{sec:dropoutuncertainty}
 Epistemic uncertainty corresponds to the variance of the models parameters.
 In a traditional dropout neural network, there is no random dropping out of neurons in test stage and weights are fix. This would result in no variance of model outputs for multiple forward passes given an input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic (model) uncertainty. Here, we will go through their proof.\\
 The key idea is that a dropout neural net is equivalent to an approximation of a Gaussian process. To randomly dropout neurons, we sample binary values that are either $0$ or $1$ for every neuron. The sampled value is then multiplied with the neurons value.
-In the following, the dropout neural network with $L$ layers the weight matrices are denoted by $W_{l \in L}$, the bias vectors by $b_l$, the network output given datapoint $x_i \in X$ with size $N$ by $\hat{y}_i$, and the true value by $y_i \in Y$. The objective of the network is to minimize a given loss function $E(y_i, \hat{y}_i)$. Additionally, a weighted regularization term can be added to the loss function. A popular technique is to use $L_2$ regularization, weighted by a weight decay term $\lambda$. The final resulting loss term is:
+In the following, the dropout neural network's layers are denoted by $L$, the respective weight matrices are denoted by $W_{l \in L}$, the bias vectors by $b_l$, the network output given datapoint $x_i \in X$ with size $N$ by $\hat{y}_i$, and the true value by $y_i \in Y$. The objective of the network is to minimize a given loss function $E(y_i, \hat{y}_i)$. Additionally, a weighted regularization term can be added to the loss function. A popular technique is to use $L_2$ regularization, weighted by a weight decay term $\lambda$. The final resulting loss term is:
 \begin{align*}
 \mathcal{L}_{dropout} := \frac{1}{N}\sum_{i=1}^{N}E(y_i, \hat{y}_i) + \lambda \sum_{l=1}^{L}(||W_l||^2_2 + ||b_l||^2_2).
 \end{align*}
-For the special case of a single hidden layer dropout network, we can rephrase this objective as
+For the special case of a single hidden layer dropout network (which we will consider for simplicity), we can rephrase this objective as
 \begin{align}\label{eq:dropout}
 \mathcal{L}_{dropout} := \frac{1}{N}\sum_{i=1}^{N}E(y_i, \hat{y}_i) + \lambda (||W_1||^2_2 + ||W_2||^2_2+ ||b||^2_2)
 \end{align}, where $W_1$ is the weight matrix connecting the input to the hidden layer, and $W_2$ connecting the hidden to the output layer. The bias $b_2$ 
@@ -350,14 +351,13 @@ Let us take a step back to a very general point of view. A problem, we typically
 \begin{align}\label{eq:pred_post}
  p(y^*|x^*, X,Y) = \int p(y^*|x^*, w)p(w|X,Y)dw
 \end{align}
-
 where $w$ is a set of adjustable parameters. In order to model our function of interest well, we need to find optimal values for $w$. If we break down Equation \ref{eq:pred_post} further, we get
 \begin{align}
 p(y^*|x^*, X,Y) = \int \underbrace{p(y^*|x^*,w)}_{\mathcal{N}(\underbrace{y;\hat{y}(x,w)}_{\hat{y}(x, w=\lbrace W_1, W_2,...,W_n\rbrace)},\tau^{-1}\mathbf{I}_D)} \cdot \hspace{15pt}\underbrace{p(w|X,Y)}_{intractable}dw
 \end{align}
-, where we see that the posterior over $w$, given data is intractable. Therefore we need to approximate it with variational distribution $q_{\theta}(w)$. We want this distribution to mimic the true posterior closely. Therefore, we want to find
+, where we see that the posterior over $w$, given data is intractable. Therefore we need to approximate it with variational distribution $q_{\theta}(w)$. We want this distribution to mimic the true posterior closely, so we want to find
 \begin{align*}
-	argmin_{\theta} KL(q_{\theta}(w)|p(w|X,Y))
+	argmin_{\theta} KL(q_{\theta}(w)|p(w|X,Y)).
 \end{align*}
 As we have seen in Section \ref{sec:vi}, this would require access to the true posterior, which we cannot compute. Therefore we maximize the log evidence lower bound
 \begin{align*}
@@ -377,12 +377,12 @@ Now, in Gaussian processes, as discussed in Section \ref{sec:gp}, we need a cova
 \begin{align*}
 K(x,y) = \int \mathcal{N}(w;0, l^{-2} I_Q)p(b)\sigma(w^Tx+b)]sigma(w^Ty +b)dwdb
 \end{align*}
-to get a covariance matrix. To avoid computing integrals, this covariance function can be approximated with
+to retrieve a covariance matrix. To avoid computing integrals, this covariance function can be approximated with
 \begin{align*}
 	\hat{K}(x,y) = \frac{1}{K} \sum_{K}^{k=1} \sigma(w^T_k x + b_k)\sigma(w^T_k y + b_k)
 \end{align*}
 where $w_k$ is sampled from $\mathcal{N}(0, l^{-2}I_Q)$ and $b_k$ from $p(b)$. This is called Monte-Carlo integration \cite{metropolis1949monte}.\\
-This gives us following predictive posterior for our GP:
+We get following predictive posterior for our GP:
 \begin{align*}
 w_k \sim \mathcal{N}(0, l^{-2}I_Q), w_d \sim \mathcal{N}(0, l^{-2} I_K), b_k \sim p(b)\\
 W_1 = \left[ w_k \right]^{K}_{k=1}, W_2 = \left[ w_d \right]^D_{d=1}, b = \left[ b_k \right]^K_{k=1}, w = \lbrace W_1, W_2, b \rbrace\\
@@ -396,7 +396,7 @@ We use $q_{\theta}(w) = q_{\theta}(W_1)q_{\theta}(W_2)q_{\theta}(b)$ as an appro
 q_{\theta}(W_1) = \Pi q_{\theta}(w_q), \text{ and } q_{\theta}(w_q) = p_1\mathcal{N}(m_q, s^2, I_K) + (1-p_1) \mathcal{N}(0, s^2, I_K),\\
 \text{ with } p_1 \text{ as a probability }\in \left[ 0, 1\right], s > 0, \text{ and }M_1 = \left[ m_q \right]^Q_{q=1} \in \mathbb{R}^{K\times D}
 \end{align}
-We eventually want to recover a dropout neural network (as specified in Eq. \ref{eq:dropout}) from our GP. In our dropout network we rely on sampling from a Bernoulli random variable. In our GP, we, so far, sample from a mixture of Gaussian distributions. We cannot change this, because the KL-divergence between a discrete distribution (Bernoulli) and a continuous distribution (Gaussian) is not defined. Therefore we will make two assumptions about the Gaussian mixture in Eq. \ref{eq:gaussian_mixture}.\\
+We eventually want to recover a dropout neural network (as specified in Eq. \ref{eq:dropout}) from our GP. In our dropout network we rely on sampling from a Bernoulli random variable. In our GP, we, so far, sample from a mixture of Gaussian distributions. We cannot change this, because the KL-divergence between a discrete distribution (i.e. Bernoulli) and a continuous distribution (i.e. Gaussian) is not defined. Therefore we will make two assumptions about the Gaussian mixture in Eq. \ref{eq:gaussian_mixture}.\\
 We set $p$ to a fix value. Also, we want the second term of the sum to be zero. To sample zero from a zero-centered Gaussian distribution with a very high probability, we simply set the standard deviation to a very small value. Small enough, so that a device with limited precision will view it as zero and always return zero. These two assumptions leave us with a Gaussian distribution that resembles a Bernoulli distribution. Thus, we are effectively sampling from a Bernoulli random variable in our GP, with a still defined KL-divergence. We get
 \begin{align*}
 \mathcal{N}_{GP-MC} \approx log p(Y|X, \hat{w}) - \frac{p_1 l^2}{2} ||M_1||^2_2 - \frac{p_2 l^2}{2}||M_2||^2_2 - \frac{l^2}{2}||m||^2_2 \text{, with } \hat{w} \sim q_{\theta}(w)
@@ -407,7 +407,7 @@ To recover the dropout objective from Eq. \ref{eq:dropout}, we can scale it by a
 \begin{align*}
 \mathcal{L}_{GP_MC} \propto  - \frac{1}{2N} \sum_{n=1}^N ||y_n - \hat{y}_n||^2_2 -  \frac{p_1 l^2}{2N\tau} ||M_1||^2_2 - \frac{p_2 l^2}{2N\tau}||M_2||^2_2 - \frac{l^2}{2N\tau}||m||^2_2
 \end{align*}
-and set hyperparameters $\tau$ and $l$ to appropriate values.
+and set hyperparameters $\tau$ and $l$ to appropriate values. According to \citet{gal2016dropout}, this generalizes to to deep GPs and Dropout networks with more than one hidden layer, as well.
 
 
 \subsection{Getting Uncertainty Information}
@@ -417,8 +417,8 @@ and set hyperparameters $\tau$ and $l$ to appropriate values.
 	\caption{We used both BatchNorm and dropout layers for $f_{attrMLP}$.}
 	\label{fig:f_attrMLP}
 \end{figure}
-We tested different configurations for $f_{AttributeMLP}$ and using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. This setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout}, this is equal to epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty. 
-After retrieving uncertainty information, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy remove uncertain attributes (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in a extended decision tensor. We refer to  as extended vocabulary (extRDTC).
+The RDTC model does not use dropout layers in the vision model. As we want to keep the ResNet as feature extractor and be able to estimate uncertainty, we introduce dropout layers to $f_{AttributeMLP}$. We tested different configurations for $f_{AttributeMLP}$ and found that using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. The setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout} and discussed in Section \ref{sec:dropoutuncertainty}, this is equal to approximated epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty.\\
+After uncertainty estimation, we use two different strategies of making the model aware of its uncertainties. In the first strategy, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy 'remove uncertain attributes' (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in an extended decision tensor. We refer to this strategy as 'extended vocabulary' (extRDTC).
 
 
 \subsection{Removing Uncertain Attributes}\label{sec:remRDTC}
@@ -439,21 +439,21 @@ After retrieving uncertainty information, we replace selection logits from $f_{Q
 %\end{figure}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.8\textwidth]{images/remove_attrs.pdf} 
+	\includegraphics[width=0.9\textwidth]{images/remove_attrs.pdf} 
 	\caption{In selection logits, the output from $f_{QuestMLP}$, we replace values at indices where uncertain attributes (orange) are, with a $-inf$ value. This assures that this attribute can never be picked as $c_t$ by the Gumbel softmax.}
 	\label{fig:remove_intuition}
 \end{figure}
 
 %TODO rewrite
-After calculating uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{QuestMLP}$ so that at each index, where a uncertain attribute is, the selection logit tensor has a -inf value. This ensures that this attribute cannot be picked by the Gumbel softmax. In turn, no uncertain attribute can be picked as index and therefore cannot be posed as a question to the AbL.\\
-In order to prevent the model from misusing uncertainty information, we have to ensure that the model does not get any gradients where uncertain attributes are.
+After computing uncertainty for each attribute, in this strategy, we simply manipulate the logits tensor from $f_{QuestMLP}$ so that at each index, where a uncertain attribute is, the selection logit tensor has a $-inf$ value. This ensures that this attribute cannot be picked by the Gumbel softmax. In turn, no uncertain attribute can be picked as index and therefore cannot be posed as a question to the AbL.\\
+In order to prevent the model from misusing uncertainty information, we have to ensure that the model does not get any gradients where uncertain attributes are. This done by detaching all attributes, affiliated with uncertainty from the computational graph. The $n$ forward passes to compute variance are therefore done without adding to the computational graph. Tensors created based on the uncertainty tensor, also do not carry gradient information. Thus, in the masked selection tensor (Figure \ref{fig:remove_intuition}) indices of uncertain attributes have a gradient of $0$.
 
 %We tested this strategy both in test-only and in training and testing stage. When using it in the test stage for a model, that was trained regularly (without uncertainty information), the model suffered severe performance drops, displayed in Figure \ref{fig:threshold_accuracies}. Especially, for low cut-off thresholds. It never outperforms a model that keeps all attributes. We hypothesize that this is due to actively removing options from a pool of attributes, that the model is already well adapted to and as shown in Figure \ref{fig:less_attrs} rarely misclassifies despite being uncertain.
 
 
 
 \subsection{Extending the Vocabulary}
-Here, we resort to an extended vocabulary of answers for $f_{AttrMLP}$. Instead of just allowing $Yes$ and $No$, we also allow the AbL to answer with $?$. Thus, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 3}$. However, since, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 2}$ we need to append the uncertainty information to $d$ while avoiding conflicting answers. This process is shown, for a two attribute example in Figure \ref{fig:extended_vocab}. After receiving the output from $f_{AttrMLP} = d_{init}$ we initiate the uncertain column $?$ with a vector of $0$s and append this to the $d_{inint}$ to create $d_{temp}$. After computing uncertainty vector $?$, we also create a negated version $!$ of it. This indicates all attributes where the model is certain. Subsequently, those are now used to clear rows. Vector $!$ has $0$s where the model is uncertain. We use this to replace values in rows of uncertain attributes with $0$s and get $d_{cleared}$. We also initiate a dummy tensor, that is of the same dimension as the $d_cleared$ and is all $0$s but in the column to the very right, where it is all $1$s. Rows of this tensor are now cleared, using $?$, wherever $?$ has zeros, thus only rows with uncertain attributes remain and have a $1$ in the column responsible for uncertainty. Finally, this tensor, and $d_cleared$ are added up to create our final decision $d$ which can now be indexed by the RDT.\\
+Here, we resort to an extended vocabulary of answers for $f_{AttrMLP}$. Instead of just allowing $Yes$, and $No$, we also allow the AbL to answer with $?$. Thus, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 3}$. However, since, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 2}$ we need to append the uncertainty information to $d$ while avoiding conflicting answers. This process is shown, for a two attribute example in Figure \ref{fig:extended_vocab}. After receiving the output from $f_{AttrMLP} = d_{init}$ we initiate the uncertain column $?$ with a vector of $0$s and append this to the $d_{inint}$ to create $d_{temp}$. After computing uncertainty vector $?$, we also create a negated version $!$ of it. This indicates all attributes where the model is certain. Subsequently, those are now used to clear rows. Vector $!$ has $0$s where the model is uncertain. We use this to replace values in rows of uncertain attributes with $0$s and get $d_{cleared}$. We also initiate a dummy tensor, that is of the same dimension as the $d_cleared$ and is all $0$s but in the column to the very right, where it is all $1$s. Rows of this tensor are now cleared, using $?$, wherever $?$ has zeros, thus only rows with uncertain attributes remain and have a $1$ in the column responsible for uncertainty. Finally, this tensor, and $d_cleared$ are added up to create our final decision $d$ which can now be indexed by the RDT.\\
 When using this strategy in training, we need to make sure, that no gradients actually come from uncertainty, so it is not misused and maximized in order for the model to profit from the additional column. We need to ensure that gradients only come from attributes, where the model is certain. For the operation, as described above, this is the case. We detach $?$ and $!$ from the computational graph. The dummy tensor is a leaf node, so no gradient is computed. Also, where values  in $d$ are $0$, their activation's derivative is $0$, so gradients are $0$. This is the case in rows of uncertain attributes. Which gradients are used and which are blocked in the previously used example is displayed in Figure \ref{fig:extended_vocab_backward}.
 
 \begin{figure}[t!]
@@ -474,8 +474,14 @@ When using this strategy in training, we need to make sure, that no gradients ac
 
 
 \subsection{Random Attribute Removal}
+As a random baseline, to compare our remRDTC, and extRDTC to, we introduce 'random attribute removal' (randRRDTC).
 Similar to the remRDTC strategy, described in Subsection \ref{sec:remRDTC}, we prevent the RDT from asking questions. However, instead of blocking indices where uncertain attributes are, we randomly generate a tensor and block indices based on it. The probability of an index being blocked is similar to the probability of an attribute being deemed uncertain to allow fair comparison.
 
+
+
+
+
+%TODO review from here on
 
 \chapter{Experiments}
 We evaluated our proposed model on different image classification datasets which provide attributes as side information. We also investigate the models behavior by quantitatively analyzing uncertainties and their affects.
@@ -503,18 +509,18 @@ The purpose of the proposed model is not only to evaluate it on benchmark datase
 In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows high negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
 
 
-\begin{figure}[t!]
+\begin{figure}
 	\centering
-	\begin{minipage}{0.45\textwidth}
+	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=1\textwidth]{images/error_sigma_corr_all.pdf} 
-		\caption{...}
+		\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used. Despite having a low (linear) correlation, the uncertainty seems to be higher for attributes that are often misclassified.}
 		\label{fig:correlations}
 	\end{minipage}\hfill
-	\begin{minipage}{0.45\textwidth}
+	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=1\textwidth]{images/corr_matrix.pdf}
-		\caption{...}
+		\caption{Correlations between misclassification rate, uncertainty and usage of attributes.}
 		\label{fig:corr_matrix}
 	\end{minipage}
 \end{figure}
@@ -526,24 +532,45 @@ After training our model on the proposed split, we investigate (1) uncertainties
 We observe that the 24 classes, possessing unseen attributes have a overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that posses 5 attributes, never encountered during training. We observe, that the latter have a overall higher uncertainty.\\
 Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
 
+\subsection{Zero Shot Setting}
+\subsection{Attribute Zero Shot Setting}
 
-
-
-\begin{figure}[t!]
+%%%%%%%%%%%% Zero Attribute
+\begin{figure}%[t!]
 	\centering
-	\begin{minipage}{0.45\textwidth}
+	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=1\textwidth]{images/zero_shot_class_uncertainty.pdf} 
+		\includegraphics[width=1\textwidth]{images/attr_zero_shot_class_uncertainty.pdf} 
 		\caption{Exponential maximum likelihood model for uncertainty per example. Examples from classes that have unseen attributes have higher attribute uncertainties.}
 		\label{fig:unseen_attr_classes}
 	\end{minipage}\hfill
-	\begin{minipage}{0.45\textwidth}
+	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=1\textwidth]{images/zero_shot_attr_uncertainty_hist.pdf}
+		\includegraphics[width=1\textwidth]{images/attr_zero_shot_uncertainty_hist.pdf}
 		\caption{Distribution of uncertainty values of seen and unseen attributes in zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more uncertain about attributes it has not encountered in the training set.}
 		\label{fig:unseen_attrs}
 	\end{minipage}
 \end{figure}
+
+
+%%%%%%%%%%% Zero Shot
+\begin{figure}[t!]
+	\centering
+	\begin{minipage}[t]{0.45\textwidth}
+		\centering
+		\includegraphics[width=1\textwidth]{images/zero_shot_class_uncertainty_hist.pdf} 
+		\caption{Exponential maximum likelihood model for uncertainty per example. Examples from classes that have unseen attributes have higher attribute uncertainties.}
+		\label{fig:unseen_classes}
+	\end{minipage}\hfill
+	\begin{minipage}[t]{0.45\textwidth}
+		\centering
+		%\includegraphics[width=1\textwidth]{images/zero_shot_uncertainty_hist.pdf}
+		\caption{Distribution of uncertainty values of seen and unseen attributes in zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more uncertain about attributes it has not encountered in the training set.}
+		%\label{fig:unseen_attrs}
+	\end{minipage}
+\end{figure}
+
+
 
 
 \section{Results}\label{sec:results}
@@ -689,7 +716,7 @@ Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithol
 To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact, of the $CO_2$ emissions caused by producing the required electricity, on the world's climate.
 The GPUs provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which, at full capacity, operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
 % epochs
-While no single model was trained for more than $50$ epochs, if we consider all models and all iterations of models, we accumulate about $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs, we have consumed $200h * 300\;kW = 60000\;kWh$ of power.\\
+While no single model was trained for more than $100$ epochs, if we consider all models, and all iterations of models, we accumulate about $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of consumed power.\\
 % co equivalent
 The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
 
