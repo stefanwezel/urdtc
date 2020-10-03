@@ -57,11 +57,11 @@ We, as humans have developed an intuition on how to make decisions under uncerta
 Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences have to be made. 
 As machine learning becomes more prevalent in our everyday lives, in science, finance, or law, the need for methods, utilizing uncertainty becomes more evident.\\
 % overconfidence of softmax and uncertainty
-Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function \cite{nwankpa2018activation} over classes. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
+Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes\cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
 % Key contributions
 Our key contributions are to propose a model, that allows to (1) study the effect of (epistemic) uncertainty for attribute-based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed model's performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its effect on performance. \\
 % Example applications
-Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings, in law, or in autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as an explanation, which could be utilized by a human user to make a final decision.
+Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings, in law, or autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as an explanation, which could be utilized by a human user to make a final decision.
 
 
 
@@ -74,7 +74,7 @@ Building on, often centuries-old, mathematical foundations, and on more recent p
 Artificial neural networks (ANNs) have become an integral part in the lives of many. Inspired by the cognitive processes of the mammalian brain, several architectures, and learning algorithms have been proposed.
 
 \subsection{Historical Context}
-The idea of artificial intelligence (AI) is dating back to antiquity and was debated in various domains ranging from chemistry \cite{o1994alchemical} to philosophy and mathematics \cite{leibnizdissertatio}. A watershed moment in its development is marked by \citet{mcculloch1943logical}, who modeled a neuron in an approach that unified findings from neurophysiology and mathematics. Later, \citet{hebb19680} proposed a theory of how the strengthening and weakening of connections between neurons encode gained knowledge(?).  This idea was also applied in the perceptron \cite{rosenblatt1960perceptron} which could learn to distinguish linearly separable classes. 
+The idea of artificial intelligence (AI) is dating back to antiquity and was debated in various domains ranging from chemistry \cite{o1994alchemical} to philosophy and mathematics \cite{leibnizdissertatio}. A watershed moment in its development is marked by \citet{mcculloch1943logical}, who modeled a neuron in an approach that unified findings from neurophysiology and mathematics. Later, \citet{hebb19680} proposed a theory of how the strengthening and weakening of connections between neurons encode gained knowledge.  This idea was also applied in the perceptron \cite{rosenblatt1960perceptron} which could learn to distinguish linearly separable classes. 
 \citet{marvin1969perceptrons} showed that the perceptron was more useful when connecting many and using a middle layer in a so-called multilayer perceptron (MLP). If this hidden layer has a non-linear activation function it could learn to classify not linearly separable data. This idea of many simple but connected units remains a key principle in ANNs.
 However, simulating the behavior of neural networks requires many computations, and the sequential nature of hardware available at the time prohibited connectionist ideas to be applied in practice.\\
 Over the decades, ANNs have risen and fallen in popularity among AI researchers. Different architectures and learning algorithms have been proposed but many failed to establish. Important milestones were \citet{rumelhart1986learning}, who extended learning rules to MLPs in the backpropagation algorithm, the Long short-term memory by \citet{hochreiter1997long}, and the convolutional neural net (CNN), proposed by \citet{lecun1995convolutional} which allowed to classify handwritten digits.\\
@@ -387,7 +387,7 @@ We get the following predictive posterior for our GP:
 w_k \sim \mathcal{N}(0, l^{-2}I_Q), w_d \sim \mathcal{N}(0, l^{-2} I_K), b_k \sim p(b)\\
 W_1 = \left[ w_k \right]^{K}_{k=1}, W_2 = \left[ w_d \right]^D_{d=1}, b = \left[ b_k \right]^K_{k=1}, w = \lbrace W_1, W_2, b \rbrace\\
 p(y^*|x^*, w) = \mathcal{N} \left( y^*; \sqrt{\frac{1}{K}\sigma(x^* W_1 + b)W_2, \tau^{-1}I_N}\right)\\
-\text{,and finally:}\hspace{150pt}\\
+\text{, and finally:}\hspace{150pt}\\
 p(y^*|x^*, X,Y) = \int p(y^*|x^*, w)p(w|X,Y)dw.
 \end{align*}
 %TODO note that this is for normal GP and single hidden layer dropout net
@@ -474,7 +474,7 @@ When using this strategy in training, we need to make sure, that no gradients co
 
 
 \subsection{Random Attribute Removal}
-As a random baseline, to compare our remRDTC, and extRDTC to, we introduce 'random attribute removal' (randRRDTC).
+As a random baseline, to compare our remRDTC, and extRDTC to, we introduce 'random attribute removal' (randRDTC).
 Similar to the remRDTC strategy, described in Subsection \ref{sec:remRDTC}, we prevent the RDT from asking questions. However, instead of blocking indices where uncertain attributes are, we randomly generate a tensor and block indices based on it. The probability of an index being blocked is similar to the probability of an attribute being deemed uncertain to allow fair comparison.
 
 
@@ -660,13 +660,13 @@ Uncertainty estimation in deep learning is not trivial. It is an active topic of
 
 
 \section{Increased Convergence Time}
-Both of our proposed models have longer convergence time as the original RDTC, proposed by \citet{alaniz2019explainable}. We hypothesize why this might be the case for (1) our removing attributes model (rRDTC) and (2) our extended vocabulary model (uRDTC).\\
+Both of our proposed models have longer convergence time as the original RDTC, proposed by \citet{alaniz2019explainable}. We hypothesize why this might be the case for our model.\\
 In both strategies we prevent the model from using gradients, coming from uncertain attributes. The model thus has less gradient information available. As a direct result, the model can update fewer parameters in each step, or make smaller changes. We hypothesize that this causes increased convergence time. 
 
 
 
 \section{The Right Kind of Uncertainty?}
-In our approach, we only considered epistemic uncertainty, which is the uncertainty arising from variance in the model's parameters. However, in closed datasets, as the ones considered, epistemic uncertainty will not change very much after the model has seen every training example. Not considering data augmentation techniques, this happens within one epoch. %TODO hmmm
+In our approach, we only consider epistemic uncertainty, which is the uncertainty arising from variance in the model's parameters. However, in closed datasets, as the ones considered, epistemic uncertainty will not change very much after the model has seen every training example. Not considering data augmentation techniques, this happens within one epoch. %TODO hmmm
 
 
 \subsection{Estimating Heteroscedastic Uncertainty}

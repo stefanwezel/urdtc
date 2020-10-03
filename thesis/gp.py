@@ -73,7 +73,7 @@ L = np.linalg.cholesky(K_ + 1e-6*np.eye(n) - np.dot(Lk.T, Lk))
 f_post = mu.reshape(-1,1) + np.dot(L, np.random.normal(size=(n,10)))
 pl.figure(1)
 
-pl.figure(figsize=(9,6))
+# pl.figure(figsize=(9,6))
 pl.clf()
 
 # sns.set_style('darkgrid')
