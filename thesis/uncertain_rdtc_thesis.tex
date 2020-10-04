@@ -27,7 +27,7 @@ Stefan Wezel,~ \verb+stefan.wezel@student.uni-tuebingen.de+,~ 2020
 %\newpage
 	
 
-
+\setstretch{1.25}
 %\input{teaser}
 \chapter*{Abstract}
 Recurrent Decision Tree Classifiers have proven to be capable of providing explanations for their classifications while yielding state of the art results in prediction accuracy on several image classification tasks. However, they may utilize features that they are highly uncertain about. We hypothesize that when using uncertainty information, the RDTC can provide more faithful explanations and become more applicable in real-life scenarios.
@@ -453,9 +453,6 @@ To prevent the model from misusing uncertainty information, we have to ensure th
 
 
 \subsection{Extending the Vocabulary}
-Here, we resort to an extended vocabulary of answers for $f_{AttrMLP}$. Instead of just allowing $Yes$ and $No$, we also allow the AbL to answer with $?$. Thus, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 3}$. However, since, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 2}$ we need to append the uncertainty information to $d$ while avoiding conflicting answers. This process is shown, for a two attribute example in Figure \ref{fig:extended_vocab}. After receiving the output from $f_{AttrMLP} = d_{init}$ we initiate the uncertain column $?$ with a vector of $0$s and append this to the $d_{inint}$ to create $d_{temp}$. After computing uncertainty vector $?$, we also create a negated version $!$ of it. This indicates all attributes where the model is certain. Subsequently, those are now used to clear rows. Vector $!$ has $0$s where the model is uncertain. We use this to replace values in rows of uncertain attributes with $0$s and get $d_{cleared}$. We also initiate a dummy tensor, that is of the same dimension as the $d_cleared$ and is all $0$s but in the column to the very right, where it is all $1$s. Rows of this tensor are now cleared, using $?$, wherever $?$ has zeros, thus only rows with uncertain attributes remain and have a $1$ in the column responsible for uncertainty. Finally, this tensor and $d_cleared$ are added up to create our final decision $d$ which can now be indexed by the RDT.\\
-When using this strategy in training, we need to make sure, that no gradients come from uncertainty, so it is not misused and maximized in order for the model to profit from the additional column. We need to ensure that gradients only come from attributes, where the model is certain. For the operation, as described above, this is the case. We detach $?$ and $!$ from the computational graph. The dummy tensor is a leaf node, so no gradient is computed. Also, where values  in $d$ are $0$, their activation's derivative is $0$, so gradients are $0$. This is the case in rows of uncertain attributes. Which gradients are used and which are blocked in the previously used example is displayed in Figure \ref{fig:extended_vocab_backward}.
-
 \begin{figure}[t!]
 	\centering
 	\begin{minipage}{0.45\textwidth}
@@ -471,6 +468,10 @@ When using this strategy in training, we need to make sure, that no gradients co
 		\label{fig:extended_vocab_backward}
 	\end{minipage}
 \end{figure}
+Here, we resort to an extended vocabulary of answers for $f_{AttrMLP}$. Instead of just allowing $Yes$ and $No$, we also allow the AbL to answer with $?$. Thus, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 3}$. However, since, $f_{AttrMLP}(z) \in \lbrace 0,1 \rbrace^{num\_attributes \times 2}$ we need to append the uncertainty information to $d$ while avoiding conflicting answers. This process is shown, for a two attribute example in Figure \ref{fig:extended_vocab}. After receiving the output from $f_{AttrMLP} = d_{init}$ we initiate the uncertain column $?$ with a vector of $0$s and append this to the $d_{inint}$ to create $d_{temp}$. After computing uncertainty vector $?$, we also create a negated version $!$ of it. This indicates all attributes where the model is certain. Subsequently, those are now used to clear rows. Vector $!$ has $0$s where the model is uncertain. We use this to replace values in rows of uncertain attributes with $0$s and get $d_{cleared}$. We also initiate a dummy tensor, that is of the same dimension as the $d_cleared$ and is all $0$s but in the column to the very right, where it is all $1$s. Rows of this tensor are now cleared, using $?$, wherever $?$ has zeros, thus only rows with uncertain attributes remain and have a $1$ in the column responsible for uncertainty. Finally, this tensor and $d_cleared$ are added up to create our final decision $d$ which can now be indexed by the RDT.\\
+When using this strategy in training, we need to make sure, that no gradients come from uncertainty, so it is not misused and maximized in order for the model to profit from the additional column. We need to ensure that gradients only come from attributes, where the model is certain. For the operation, as described above, this is the case. We detach $?$ and $!$ from the computational graph. The dummy tensor is a leaf node, so no gradient is computed. Also, where values  in $d$ are $0$, their activation's derivative is $0$, so gradients are $0$. This is the case in rows of uncertain attributes. Which gradients are used and which are blocked in the previously used example is displayed in Figure \ref{fig:extended_vocab_backward}.
+
+
 
 
 \subsection{Random Attribute Removal}
@@ -498,14 +499,15 @@ AwA2 is a medium scale coarse-grained dataset of 37,322 images that can be subdi
 \begin{figure}[t!]
 	\centering
 	\includegraphics[width=1\textwidth]{images/attr_heatmap_short.pdf} 
-	\caption{Here, we only show normalized attributes misclassification frequency, uncertainty, and usage for attributes that are used by the model.}
+	\caption{Here, we only show normalized attributes misclassification frequency, uncertainty, and usage for attributes that are used by the model. Some of the attributes used frequently are highly uncertain.}
 	\label{fig:less_attrs}
 \end{figure}
+
+
 \section{Statistics on Uncertainty}
 %TODO have second look, once new figures are available
 The purpose of the proposed model is not only to evaluate it on benchmark datasets but also to quantitatively investigate uncertainties in the model. We examined correlations between variables such as attribute uncertainty, usage, and misclassification on the CUB dataset. From Figure \ref{fig:less_attrs} it becomes obvious that only a small subset of the 312 attributes is actually used to make decisions. We can already see, that most of the attributes that are used, however, are rarely misclassified. As apparent in the top row, all attributes here are classified correctly quite reliably. However, there seems to be no obvious correlation between uncertainty and misclassification as among the frequently used attributes (and thus reliably classified correctly) there are some attributes that have high uncertainty values.\\
 In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows a high negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
-
 
 \begin{figure}
 	\centering
@@ -523,6 +525,7 @@ In Figure \ref{fig:correlations} we can see that this is true and uncertain attr
 	\end{minipage}
 \end{figure}
 
+
 \section{Testing on Out-of-domain Data}\label{sec:zero_shot}
 An important aspect of our model is that it is not only self-aware regarding uncertainty but also allows for human introspection. Here, we test whether examples, far from the training data, the model has seen cause high uncertainty.
 %A classical zero-shot setting or a generalized zero shot setting (both described by \cite{8413121}) would not yield meaningful insights here. As in our proposed model, we only consider epistemic attribute uncertainty, uncertainty of classes should only depend on whether attributes attributes have been seen by the model and not whether classes have seen by the model, a possible weakness of our model, we further discuss in \ref{sec:attr_uncertainty}.
@@ -532,6 +535,11 @@ An important aspect of our model is that it is not only self-aware regarding unc
 
 \subsection{Attribute Zero Shot Setting}
 %%%%%%%%%%%% Zero Attribute
+
+As a sanity check, we first investigate attribute uncertainty in a zero-attribute setting. We exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three. We construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that posses 5 exclusive attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
+After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.
+We observe that the 24 classes, possessing unseen attributes have an overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that possess 5 attributes, never encountered during training. We observe, that the latter have an overall higher uncertainty.\\
+Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
 \begin{figure}[t!]
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
@@ -547,13 +555,28 @@ An important aspect of our model is that it is not only self-aware regarding unc
 		\label{fig:unseen_attrs}
 	\end{minipage}
 \end{figure}
-As a sanity check, we first investigate attribute uncertainty in a zero-attribute setting. We exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three. We construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that posses 5 exclusive attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
-After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.
-We observe that the 24 classes, possessing unseen attributes have an overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that possess 5 attributes, never encountered during training. We observe, that the latter have an overall higher uncertainty.\\
-Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
-
 \subsection{Zero Shot Setting}
-\begin{figure}[t!]
+
+Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty.
+
+%TODO check this 
+However, the overall most frequent uncertainty value is 0 for both classes. This is due to features, not present in the image, the corresponding attribute, typically the corresponding attribute(s) will yield low uncertainty.
+
+
+
+
+
+
+
+
+\section{Results}\label{sec:results}
+We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.\\
+ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-trained on ImageNet data \cite{deng2009imagenet} data and then fine-tuned for the specific tasks. We also use a ResNet trained in this manner in our proposed uRDTC model to extract features. When we train the uRDTC model, we keep the weights in the ResNet fixed and only adjust all other parameters in the model.\\
+XDT and DT are both traditional decision tree models that serve as a baseline. For DT \citet{alaniz2019explainable} propose the following method: DT is given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in the extracted feature vector. For each split, one feature is chosen and a split is created. This is repeated until either each leaf node corresponds to exactly one class or an early stopping-criterion is met. Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by an MLP that was trained to predict attributes given ResNet features (similar to $f_{AttrMLP}$). They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As a splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.\\
+Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \citet{kontschieder2015deep}. They learn an ensemble of trees by optimizing routing probabilities in each tree's internal nodes. Every path through a tree eventually leads to class distribution, represented in leaf nodes. All internal nodes are sigmoid-activated, differentiable stochastic functions, parameterized by an optimizable $\theta$. The final prediction is an average over the resulting decision tree forest. One downside of the resulting averaged stochastic routing decisions is the reduced interpretability as they allow for multiple possible routes. The RDTC models only yield on possible route for a given example. Therefore, we consider only an dNDF using a single tree instead of an ensemble mean.
+
+
+\begin{figure}
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
@@ -568,26 +591,6 @@ Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty v
 		%\label{fig:unseen_attrs}
 	\end{minipage}
 \end{figure}
-Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty.
-
-%TODO check this 
-However, the overall most frequent uncertainty value is 0 for both classes. This is due to features, not present in the image, the corresponding attribute, typically the corresponding attribute(s) will yield low uncertainty.
-
-
-
-
-
-%TODO review from here on
-
-
-\section{Results}\label{sec:results}
-We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.\\
-ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-trained on ImageNet data \cite{deng2009imagenet} data and then fine-tuned for the specific tasks. We also use a ResNet trained in this manner in our proposed uRDTC model to extract features. When we train the uRDTC model, we keep the weights in the ResNet fixed and only adjust all other parameters in the model.\\
-XDT and DT are both traditional decision tree models that serve as a baseline. For DT \citet{alaniz2019explainable} propose the following method: DT is given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in the extracted feature vector. For each split, one feature is chosen and a split is created. This is repeated until either each leaf node corresponds to exactly one class or an early stopping-criterion is met. Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by an MLP that was trained to predict attributes given ResNet features (similar to $f_{AttrMLP}$). They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As a splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.\\
-Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \citet{kontschieder2015deep}. They learn an ensemble of trees by optimizing routing probabilities in each tree's internal nodes. Every path through a tree eventually leads to class distribution, represented in leaf nodes. All internal nodes are sigmoid-activated, differentiable stochastic functions, parameterized by an optimizable $\theta$. The final prediction is an average over the resulting decision tree forest. One downside of the resulting averaged stochastic routing decisions is the reduced interpretability as they allow for multiple possible routes. The RDTC models only yield on possible route for a given example. Therefore, we consider only an dNDF using a single tree instead of an ensemble mean.
-
-
-
 \subsection{Comparing RDTC to Other Models}
 %$\rightarrow$\\
 %\textit{Dataset}\\
