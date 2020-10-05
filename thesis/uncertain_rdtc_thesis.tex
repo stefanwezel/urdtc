@@ -725,9 +725,10 @@ Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithol
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.9\textwidth]{ornithology.pdf}
-	\caption{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually.}
+	\caption[caption for ]{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	\label{fig:qual}
 \end{figure}
+
 
 \section{Carbon Footprint Estimation}
 % devices
@@ -738,7 +739,7 @@ While no single model was trained for more than $100$ epochs, if we consider all
 % co equivalent
 The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
 
-
+\footnotetext{Graphics derived from \cite{cartoon2016desk, teacher2016, binocular2016, drone2016,bird2016}.}
 
 \chapter{Conclusion}
 Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes provided as side information. The nodes of the resulting tree correspond to attributes and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree or extend it to a ternary decision tree, where '?' is an additional option.\\
