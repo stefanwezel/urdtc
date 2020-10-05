@@ -19,8 +19,8 @@ Stefan Wezel,~ \verb+stefan.wezel@student.uni-tuebingen.de+,~ 2020
 
 \begin{tabular}{@{}l@{\hspace{2em}}l}
 	Bearbeitungszeitraum:& von-bis \vspace*{5ex} \\
-	Betreuer/Gutachter:& Prof. Dr. Zeynep Akata, Universität Tübingen\\
-	Betreuer:& Stephan Alaniz, Max Planck Institut für Informatik
+	Betreuer*in/Gutachter*in:& Prof. Dr. Zeynep Akata, Universität Tübingen\\
+	Betreuer*in:& Stephan Alaniz, Max Planck Institut für Informatik
 \end{tabular}
 
 \thispagestyle{empty}
@@ -30,9 +30,9 @@ Stefan Wezel,~ \verb+stefan.wezel@student.uni-tuebingen.de+,~ 2020
 \setstretch{1.25}
 %\input{teaser}
 \chapter*{Abstract}
-Recurrent Decision Tree Classifiers have proven to be capable of providing explanations for their classifications while yielding state of the art results in prediction accuracy on several image classification tasks. However, they may utilize features that they are highly uncertain about. We hypothesize that when using uncertainty information, the RDTC can provide more faithful explanations and become more applicable in real-life scenarios.
+Recurrent Decision Tree Classifiers (RDTC) have proven to be capable of providing explanations for their classifications while yielding state of the art results in prediction accuracy on several image classification tasks. However, they may utilize features that they are highly uncertain about. We hypothesize that when using uncertainty information, the RDTC can provide more faithful explanations and become more applicable in real-life scenarios.
 Based on RDTC, we propose a model that utilizes uncertainty information. We either enhance the vocabulary of RDTC with an uncertainty token, allowing for a ternary decision tree, or, we restrict the RDTC from using uncertain attributes. 
-We investigate how this uncertainty information can be used in generating interpretable model outputs and how it affects the model's performance on several benchmark tasks.
+We investigate how this uncertainty information can be used in generating interpretable model outputs and how it affects the model's performance on several benchmark tasks. We show that our model reliably yields high uncertainty for examples from unseen classes. Moreover its performance on benchmark image datasets is comparable to other State-of-the-art methods.
 
 
 
@@ -47,19 +47,20 @@ We investigate how this uncertainty information can be used in generating interp
 
 \chapter{Introduction}
 % Motivation for explainabiltiy and uncertainty
-The recent surge in the popularity of machine learning methods has made the fields ambivalent nature obvious. Public opinion is split between hype and mistrust. 
+The recent surge in the popularity of machine learning methods has made the field's ambivalent nature obvious. Public opinion is split between hype and mistrust. 
 Systems, using machine learning have failed at seemingly simple tasks \cite{kelion2018ces}, displayed racist and sexist behavior \cite{guynn2015google, schlesinger2018let, zou2018ai}, and even caused fatalities \cite{yadron2016tesla}.
 Such cases, where artificial intelligence has made severe mistakes are funny at best and outright dangerous at worst. Most importantly, they have made it clear that, despite being deployed more frequently than ever before, machine learning has yet to prove itself \cite{schlesinger2018let, dikmen2016autonomous, zou2018ai}.
 These cases show that methods that allow introspection and behave faithfully are more important than ever.\\
 Addressing such issues, \citet{alaniz2019explainable} propose a model that can reliable justify its classification by stating utilized features in a decision tree. Here, we build on this method. We extend the model so that it is aware of and able to express its uncertainties. We hypothesize that such a model may be perceived by a user as more trustful than a model that does not.\\
 % more motivation on uncertainty
+Uncertainty information can help improve the interaction between artificial intelligence and humans.
 We, as humans have developed an intuition on how to make decisions under uncertainty \cite{bland2012different} and are able to operate in a domain of limited and noisy data. Moreover, uncertainty is an important measure in science that allows us to express how well something is known or can be known. Scientists from fields like medicine, physics, or meteorology rely on uncertainty information for making and communicating decisions or predictions. Outside the scientific world, uncertainty information is important in finance or law among others \cite{liu2013toward, d1983legal}.\\
-Uncertainty information is valuable. Especially in real-world scenarios, where we might encounter only limited or noisy data to learn from. Where predictions, far into the future are required. Or, where decisions with high consequences have to be made. 
+Uncertainty information is valuable, especially in real-world scenarios, where we might encounter only limited or noisy data to learn from. Or, where decisions with high consequences have to be made. 
 As machine learning becomes more prevalent in our everyday lives, in science, finance, or law, the need for methods, utilizing uncertainty becomes more evident.\\
 % overconfidence of softmax and uncertainty
-Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes\cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
+Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes \cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.
 % Key contributions
-Our key contributions are to propose a model, that allows to (1) study the effect of (epistemic) uncertainty for attribute-based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed model's performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its effect on performance. \\
+Our key contributions are to propose a model, that allows to (1) study the effect of uncertainty for attribute-based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed model's performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its effect on performance. \\
 % Example applications
 Such a model may be applied in settings, where a high confidence classification for out-of-domain examples may have severe consequences. For example in medical settings, in law, or autonomous driving. There, in cases of high uncertainty, a human could be notified and consulted, preventing the model from making a (potentially wrong) high-risk decision. The model would still provide a decision tree as an explanation, which could be utilized by a human user to make a final decision.
 
@@ -82,7 +83,7 @@ However, these methods still failed to establish far beyond the realm of researc
 
 
 \subsection{Multilayer Perceptron}\label{sec:MLP}
-The MLP is a rather simple architecture. It consists of an input layer, an arbitrary number of hidden layers, and an output layer. Each neuron is typically connected to each neuron in the next layer through weighted connections. Thus each neuron gets the weighted output from the last layer's neurons as input. Non-linear activation functions allow the network to learn not linearly separable problems. Their rather simple structure and effectiveness make them a widely used tool \cite{beale1990neural}. In the RDTC model, $f_{AttrMLP}$, $f_{QuestMLP}$, and $f_{ClassMLP}$ are used to lean mappings from the complex output of other models to a simpler structure, that can i.e. be interpreted by a human. For example from ResNet features to attributes.
+The MLP is a rather simple architecture. It consists of an input layer, an arbitrary number of hidden layers, and an output layer. Each neuron is typically connected to each neuron in the next layer through weighted connections. Thus, each neuron gets the weighted output from the last layer's neurons as input. Non-linear activation functions allow the network to learn not linearly separable problems. Their rather simple structure and effectiveness make them a widely used tool \cite{beale1990neural}. In the RDTC model, $f_{AttrMLP}$, $f_{QuestMLP}$, and $f_{ClassMLP}$ are used to lean mappings from the complex output of other models to a simpler structure, that can i.e. be interpreted by a human. For example from ResNet features to attributes.
 
 
 \begin{figure}
@@ -90,7 +91,7 @@ The MLP is a rather simple architecture. It consists of an input layer, an arbit
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=0.8\textwidth,height=0.21\textheight]{images/mlp.pdf} 
-		\caption{A MLP can consists of an input layer, an arbitrary number of hidden layers, and an output layer. Hidden layers typically have non-linear activation functions.}
+		\caption{An MLP consists of an input layer, an arbitrary number of hidden layers, and an output layer. Hidden layers typically have non-linear activation functions.}
 	\end{minipage}\hfill
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
@@ -104,14 +105,14 @@ The MLP is a rather simple architecture. It consists of an input layer, an arbit
 
 
 \subsection{Recurrent Neural Networks}
-Many types of data don't provide samples of fixed length. This is the case for most language or time-series data among others. An MLP, however, is incapable of processing such samples due to its fixed amount of input neurons. To alleviate this, recurrent neural networks (RNNs) use the output of their neurons as input after being multiplied with a weight matrix. Many concepts of RNNs exist \cite{Grossberg:2013}. Here we will have a closer look at a very simple example, depicted in Figure \ref{fig:rnn}.
+Many types of data do not provide samples of fixed length. This is the case for most language or time-series data among others. An MLP, however, is incapable of processing such samples due to its fixed amount of input neurons. To alleviate this, recurrent neural networks (RNNs) use the output of their neurons as input after being multiplied with a weight matrix. Many concepts of RNNs exist \cite{Grossberg:2013}. Here we will have a closer look at a very simple example, depicted in Figure \ref{fig:rnn}.
 The  RNN takes in an input $in_t$ which is transformed by weight matrix $u$ and added to the hidden state of the last time step times weight matrix $w$. This forms the hidden state of the current time step. To obtain an output at a given time step, the hidden state is multiplied with a weight matrix $v$. The update rules can be stated as:
 \begin{align}
 	h_t &= f_{act}(u \circ in_t + w \circ h_{t-1})\\
 	out_t &=f_{act}(v \circ h_t)
 \end{align}
 An RNN can be trained by the Backpropagation through time algorithm (BPTT). \citet{werbos1990backpropagation} propose to unfold an RNN for each time step or element of the input. This unfolding makes it equivalent to a feed-forward ANN (such as the MLP introduced in Subsection \ref{sec:MLP}) and weights can be adjusted according to the gradients.\\
-As basic RNN structures suffer from vanishing and exploding gradient problems \cite{bengio1994learning}, several improvements have been proposed such as the LSTM \cite{hochreiter1997long} and the Gated recurrent unit (GRU)\cite{cho2014learning}.
+As basic RNN structures suffer from vanishing and exploding gradient problems \cite{bengio1994learning}, several improvements have been proposed such as the LSTM \cite{hochreiter1997long} and the Gated recurrent unit (GRU) \cite{cho2014learning}.
 The RDTC model relies on an LSTM to classify the decision tree which updates its depth after each question is asked and answered and thus could not be classified by an MLP.
 
 
@@ -121,7 +122,7 @@ CNN's have proven to be a useful tool for various image-related tasks. They are 
 \begin{figure}
 	\centering
 		\includegraphics[width=0.9\textwidth]{images/convnet.pdf} 
-		\caption{A CNN with two convolutional and subsampling layers. A fully connected layer transforms the learned features into a human interpretable output. The displayed structures can be repeated an arbitrary number of times. Modern convolutional architectures may have have a large number of layers \cite{he2016deep,szegedy2015going,xie2017aggregated}.}
+		\caption{A CNN with two convolutional and subsampling layers. A fully connected layer transforms the learned features into a human interpretable output. The displayed structures can be repeated an arbitrary number of times. Modern convolutional architectures may have a large number of layers \cite{he2016deep,szegedy2015going,xie2017aggregated}.}
 		\label{fig:convnet}
 \end{figure}
 
@@ -165,7 +166,7 @@ Communication between different agents is a popular technique in reinforcement l
 
 
 \section{Uncertainty}
-Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. It compromises all kinds of noise inherent to the data. If this noise is static (i.e. limited precision of a sensor) it is called homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty.\\
+Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. It compromises all kinds of noise inherent to the data. If this noise is static (i.e. limited precision of a sensor) it is called homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty \cite{kwon2020uncertainty}.\\
 On the other hand, a model can also be uncertain about its parameters. This uncertainty is called epistemic uncertainty and is high if a model has seen few data. By giving it more data, it can be reduced. Those two kinds of uncertainty are displayed for a computer vision task in Figure \ref{fig:uncertainty_example}.
 % image that shows the heteroscedastic and epistemic uncertainty
 \begin{figure}
@@ -189,7 +190,7 @@ Methods of variational inference are used when intractable integrals are encount
 \begin{align*}
 p(y^*|x^*, X,Y) = \int p(y^*|x^*, w)p(w|X,Y)dw.
 \end{align*}
-The true posterior over model parameters, given data $p(w|X,Y)$ is not trivial to find an is often intractable in practice. Therefore an approximate distribution $q_{\theta}(w)$, with optimizable parameters $\theta$ is used. Ideally, $q_{\theta}(w)$ should be similar to the true posterior. Thus, we minimize the KL-divergence between the approximate distribution and the true posterior.
+The true posterior over model parameters, given data $p(w|X,Y)$ is not trivial to find and is often intractable in practice. Therefore, an approximate distribution $q_{\theta}(w)$, with optimizable parameters $\theta$ is used. Ideally, $q_{\theta}(w)$ should be similar to the true posterior. Thus, we minimize the KL-divergence between the approximate distribution and the true posterior.
 \begin{align*}
 KL(q_{\theta}(w)|p(w|X,Y)).
 \end{align*}
@@ -243,17 +244,16 @@ $f_{posterior}$ = $\mu$ + $L \cdot \mathcal{N}(dim=(n, num\_samples);0,1)$\\
 Deep neural networks (DNNs) are applied in safety-critical processes where information about a model's uncertainty is of crucial importance \cite{najafabadi2015deep,krzywinski2013importance}. Standard DNN's however do not yield uncertainty information. Bayesian neural networks (BNNs) are an architecture that can model uncertainty reliably \cite{mullachery2018bayesian}. However, they require modeling a probability density function over each parameter which causes high computational costs. A method using variance arising from dropout has been proposed by \citet{gal2016dropout} who proofed that dropout in neural networks is equal to Monte-Carlo integration in GPs and thus can be used to model epistemic uncertainty.\\
 With a GP, we want to find a posterior distribution over function that explains given data. We can view a finite model like a neural network as an approximation to a GP \cite{damianou2013deep}. Thus, by optimizing a model, we minimize the Kullbach-Leibler (KL) divergence between our finite model and the corresponding GP \cite{gal2016dropout}. In practice, however, the GP's posterior often requires computing intractable integrals. To alleviate this, methods of variational inference, such as Monte-Carlo integration are applied. Monte-Carlo integration in a GP corresponds to averaging forward passes in a dropout neural net. According to \citet{gal2016dropout}, the resulting variance can be viewed as the model's uncertainty.
 \\
-Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and epistemic uncertainty in a unified approach. For classification tasks, this has been simplified by \citet{kwon2020uncertainty}.
-
-
+Additionally, \citet{kendall2017uncertainties} propose to combine aleatoric and epistemic uncertainty in a unified approach. They estimate epistemic uncertainty with dropout and learn to predict high aleatoric uncertainty for falsely classified examples.
+For classification tasks, this has been simplified by \citet{kwon2020uncertainty}. Instead of learning uncertainty, they model aleatoric based on the distribution of softmax output values.
 
 
 
 
 
 \chapter{Uncertain RDTC} % aka Methods aka Architecture
-The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents. A Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision three allows introspection.\\
-Based on their work, we propose a model, where the AbL is aware and able to express its uncertainty for given attributes (See Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
+The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents; a Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision three allows introspection.\\
+Based on their work, we propose a model, where the AbL is aware and able to express its uncertainty for given attributes (Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
 
 
 
@@ -285,7 +285,7 @@ log\;\pi &\text{ are the logit values for either 'yes', or 'no' per attribute.}%
 
 
 \subsection{RDT}
-The RDT agent consists of several models. At its core lies a Long-short Term Memory (LSTM). This recurrent model allows the RDT to come up with new questions, based on it's hidden state $h_{t-1}$ from the last (or initial) communication step.\\
+The RDT agent consists of several models. At its core lies a Long-short Term Memory (LSTM). This recurrent model allows the RDT to come up with new questions, based on its hidden state $h_{t-1}$ from the last (or initial) communication step.\\
 The $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttributeMLP}$. The output of $f_{QuestMLP}$ are logit values $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$. To get an actual index, the final output needs to be discrete. Thus we need to turn the logit values into a categorical distribution and sample from it. This is done via the Gumbel softmax function \cite{jang2016categorical}:
 \begin{align}
 		GumbelSoftmax(log\;\pi) &= \frac{exp((log\;\pi_i + g_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j + g_j)/\tau)}\text{ , where}\\
@@ -337,7 +337,7 @@ Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\r
 
 \subsection{Estimating Epistemic Uncertainty with Dropout Neural Networks}\label{sec:dropoutuncertainty}
 Epistemic uncertainty corresponds to the variance of the model's parameters.
-In a traditional dropout neural network, there is no random dropping out of neurons in the test stage, and weights are fixed. This would result in no variance of model outputs for multiple forward passes given an input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic (model) uncertainty. Here, we will go through their proof.\\
+In a traditional dropout neural network, there is no random dropping out of neurons in the test stage, and weights are fixed. This would result in no variance of model outputs for multiple forward passes given an input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic (model) uncertainty. In the following, we will go through their proof.\\
 The key idea is that a dropout neural net is equivalent to an approximation of a Gaussian process. To randomly dropout neurons, we sample binary values that are either $0$ or $1$ for every neuron. The sampled value is then multiplied with the neuron's value.
 In the following, the dropout neural network's layers are denoted by $L$, the respective weight matrices are denoted by $W_{l \in L}$, the bias vectors by $b_l$, the network output, given datapoint $x_i \in X$ with size $N$ by $\hat{y}_i$, and the true value by $y_i \in Y$. The objective of the network is to minimize a given loss function $E(y_i, \hat{y}_i)$. Additionally, a weighted regularization term can be added to the loss function. A popular technique is to use $L_2$ regularization, weighted by a weight decay term $\lambda$. The final resulting loss term is:
 \begin{align*}
@@ -346,24 +346,24 @@ In the following, the dropout neural network's layers are denoted by $L$, the re
 For the special case of a single hidden layer dropout network (which we will consider for simplicity), we can rephrase this objective as
 \begin{align}\label{eq:dropout}
 \mathcal{L}_{dropout} := \frac{1}{N}\sum_{i=1}^{N}E(y_i, \hat{y}_i) + \lambda (||W_1||^2_2 + ||W_2||^2_2+ ||b||^2_2)
-\end{align}, where $W_1$ is the weight matrix connecting the input to the hidden layer, and $W_2$ connecting the hidden to the output layer. The bias $b_2$ 
+\end{align}, where $W_1$ is the weight matrix connecting the input to the hidden layer, and $W_2$ connecting the hidden to the output layer, and $b$ the connection between a bias neuron and the hidden layer's neurons.\\
 Let us take a step back to a very general point of view. A problem, we typically encounter in machine learning is how to predict a function value $y^*$ from a datapoint $x^*$. In Bayesian terms, we want to find the predictive posterior
 \begin{align}\label{eq:pred_post}
  p(y^*|x^*, X,Y) = \int p(y^*|x^*, w)p(w|X,Y)dw
 \end{align}
 where $w$ is a set of adjustable parameters. To model our function of interest well, we need to find optimal values for $w$. If we break down Equation \ref{eq:pred_post} further, we get
 \begin{align}
-p(y^*|x^*, X,Y) = \int \underbrace{p(y^*|x^*,w)}_{\mathcal{N}(\underbrace{y;\hat{y}(x,w)}_{\hat{y}(x, w=\lbrace W_1, W_2,...,W_n\rbrace)},\tau^{-1}\mathbf{I}_D)} \cdot \hspace{15pt}\underbrace{p(w|X,Y)}_{intractable}dw
+p(y^*|x^*, X,Y) = \int \underbrace{p(y^*|x^*,w)}_{\mathcal{N}(\underbrace{y;\hat{y}(x,w)}_{\hat{y}(x, w=\lbrace W_1, W_2,...,W_n\rbrace)},\tau^{-1}\mathbf{I}_D)} \cdot \hspace{15pt}\underbrace{p(w|X,Y)}_{intractable}dw,
 \end{align}
-, where we see that the posterior over $w$, given data is intractable. Therefore we need to approximate it with variational distribution $q_{\theta}(w)$. We want this distribution to mimic the true posterior closely, so we want to find
+where we see that the posterior over $w$, given data is intractable, which is why we approximate it with variational distribution $q_{\theta}(w)$. We want this distribution to mimic the true posterior closely, so we want to find
 \begin{align*}
 	argmin_{\theta} KL(q_{\theta}(w)|p(w|X,Y)).
 \end{align*}
-As we have seen in Section \ref{sec:vi}, this would require access to the true posterior, which we cannot compute. Therefore we maximize the log evidence lower bound
+As we have seen in Section \ref{sec:vi}, this would require access to the true posterior, which we cannot compute. Therefore, we maximize the log evidence lower bound
 \begin{align*}
 \mathcal{L}_{VI} := \int q_{\theta}(w) log p (Y|X, w)dw - KL(q_{\theta}(w)||p(w))
 \end{align*}
-and assume $p(w)$ to be a standard Gaussian. As discussed also in Section \ref{sec:vi}, we effectively turn computing integrals into an optimization problem, where we need to compute derivatives. Using the optimized variational distribution $q_{\theta}^*(w)$, we can compute an approximate predictive posterior 
+and assume $p(w)$ to be a standard Gaussian. As discussed in Section \ref{sec:vi}, we effectively turn computing integrals into an optimization problem, where we need to compute derivatives. Using the optimized variational distribution $q_{\theta}^*(w)$, we can compute an approximate predictive posterior 
 \begin{align*}
 q_{\theta}(y^*|x^*) = \int p(y^*|x^*, w)q_{\theta}^*(w)dw
 \end{align*}
@@ -396,14 +396,14 @@ We use $q_{\theta}(w) = q_{\theta}(W_1)q_{\theta}(W_2)q_{\theta}(b)$ as an appro
 q_{\theta}(W_1) = \Pi q_{\theta}(w_q), \text{ and } q_{\theta}(w_q) = p_1\mathcal{N}(m_q, s^2, I_K) + (1-p_1) \mathcal{N}(0, s^2, I_K),\\
 \text{ with } p_1 \text{ as a probability }\in \left[ 0, 1\right], s > 0, \text{ and }M_1 = \left[ m_q \right]^Q_{q=1} \in \mathbb{R}^{K\times D}
 \end{align}
-We eventually want to recover a dropout neural network (as specified in Eq. \ref{eq:dropout}) from our GP. In our dropout network, we rely on sampling from a Bernoulli random variable. In our GP, we, so far, sample from a mixture of Gaussian distributions. We cannot change this, because the KL-divergence between a discrete distribution (i.e. Bernoulli) and a continuous distribution (i.e. Gaussian) is not defined. Therefore we will make two assumptions about the Gaussian mixture in Eq. \ref{eq:gaussian_mixture}.\\
+We eventually want to recover a dropout neural network (as specified in Eq. \ref{eq:dropout}) from our GP. In our dropout network, we rely on sampling from a Bernoulli random variable. In our GP, we, so far, sample from a mixture of Gaussian distributions. We cannot change this, because the KL-divergence between a discrete distribution (i.e. Bernoulli) and a continuous distribution (i.e. Gaussian) is not defined. Therefore, we will make two assumptions about the Gaussian mixture in Eq. \ref{eq:gaussian_mixture}.\\
 We set $p$ to a fixed value. Also, we want the second term of the sum to be zero. To sample zero from a zero-centered Gaussian distribution with a very high probability, we simply set the standard deviation to a very small value. Small enough, so that a device with limited precision will view it as zero and always return zero. These two assumptions leave us with a Gaussian distribution that resembles a Bernoulli distribution. Thus, we are effectively sampling from a Bernoulli random variable in our GP, with a still defined KL-divergence. We get
 \begin{align*}
 \mathcal{N}_{GP-MC} \approx log p(Y|X, \hat{w}) - \frac{p_1 l^2}{2} ||M_1||^2_2 - \frac{p_2 l^2}{2}||M_2||^2_2 - \frac{l^2}{2}||m||^2_2 \text{, with } \hat{w} \sim q_{\theta}(w)
 \end{align*}
 as approximated log evidence lower bound.
 % here, the maximizing variational parameters are the same as in the ELBO specified, above
-To recover the dropout objective from Eq. \ref{eq:dropout}, we can scale it by a constant $\frac{1}{N \tau}$.
+To recover the dropout objective from Equation \ref{eq:dropout}, we can scale it by a constant $\frac{1}{N \tau}$.
 \begin{align*}
 \mathcal{L}_{GP_MC} \propto  - \frac{1}{2N} \sum_{n=1}^N ||y_n - \hat{y}_n||^2_2 -  \frac{p_1 l^2}{2N\tau} ||M_1||^2_2 - \frac{p_2 l^2}{2N\tau}||M_2||^2_2 - \frac{l^2}{2N\tau}||m||^2_2
 \end{align*}
@@ -418,7 +418,7 @@ and set hyperparameters $\tau$ and $l$ to appropriate values. According to \cite
 	\label{fig:f_attrMLP}
 \end{figure}
 The RDTC model does not use dropout layers in the vision model. As we want to keep the ResNet as a feature extractor and be able to estimate uncertainty, we introduce dropout layers to $f_{AttributeMLP}$. We tested different configurations for $f_{AttributeMLP}$ and found that using a combination of dropout and batchnorm layers between, fully connected layers and non-linearities worked best. The setup is displayed in Figure \ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout} and discussed in Section \ref{sec:dropoutuncertainty}, this is equal to approximated epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty.\\
-After uncertainty estimation, we use two different strategies of making the model aware of its uncertainties. In the first strategy, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy 'remove uncertain attributes' (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in an extended decision tensor. We refer to this strategy as 'extended vocabulary' (extRDTC).
+After uncertainty estimation, we use two different strategies of making the model aware of its uncertainties. In the first strategy, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy 'remove uncertain attributes' (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in an extended decision tensor. We refer to this strategy as 'extended vocabulary' (extRDTC). In both strategies, an attribute is deemed uncertain if its uncertainty lies above a threshold that is determined by a hyperparameter.
 
 
 \subsection{Removing Uncertain Attributes}\label{sec:remRDTC}
@@ -507,7 +507,7 @@ AwA2 is a medium scale coarse-grained dataset of 37,322 images that can be subdi
 \section{Statistics on Uncertainty}
 %TODO have second look, once new figures are available
 The purpose of the proposed model is not only to evaluate it on benchmark datasets but also to quantitatively investigate uncertainties in the model. We examined correlations between variables such as attribute uncertainty, usage, and misclassification on the CUB dataset. From Figure \ref{fig:less_attrs} it becomes obvious that only a small subset of the 312 attributes is actually used to make decisions. We can already see, that most of the attributes that are used, however, are rarely misclassified. As apparent in the top row, all attributes here are classified correctly quite reliably. However, there seems to be no obvious correlation between uncertainty and misclassification as among the frequently used attributes (and thus reliably classified correctly) there are some attributes that have high uncertainty values.\\
-In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows a high negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
+In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows a strong negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
 
 \begin{figure}
 	\centering
@@ -560,7 +560,7 @@ Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty v
 Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty.
 
 %TODO check this 
-However, the overall most frequent uncertainty value is 0 for both classes. This is due to features, not present in the image, the corresponding attribute, typically the corresponding attribute(s) will yield low uncertainty.
+%However, the overall most frequent uncertainty value is 0 for both classes. This is due to features, not present in the image, the corresponding attribute, typically the corresponding attribute(s) will yield low uncertainty.
 
 
 
@@ -571,8 +571,9 @@ However, the overall most frequent uncertainty value is 0 for both classes. This
 
 \section{Results}\label{sec:results}
 We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.\\
-ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-trained on ImageNet data \cite{deng2009imagenet} data and then fine-tuned for the specific tasks. We also use a ResNet trained in this manner in our proposed uRDTC model to extract features. When we train the uRDTC model, we keep the weights in the ResNet fixed and only adjust all other parameters in the model.\\
-XDT and DT are both traditional decision tree models that serve as a baseline. For DT \citet{alaniz2019explainable} propose the following method: DT is given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in the extracted feature vector. For each split, one feature is chosen and a split is created. This is repeated until either each leaf node corresponds to exactly one class or an early stopping-criterion is met. Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by an MLP that was trained to predict attributes given ResNet features (similar to $f_{AttrMLP}$). They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As a splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.\\
+ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-trained on ImageNet data \cite{deng2009imagenet} and then fine-tuned for the specific tasks. We also use a ResNet trained in this manner in our proposed uRDTC model to extract features. When we train the uRDTC model, we keep the weights in the ResNet fixed and only adjust all other parameters in the model.\\
+XDT and DT are both traditional decision tree models that serve as a baseline. For DT \citet{alaniz2019explainable} propose the following method: DT is given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in the extracted feature vector. For each split, one feature is chosen and a split is created. This is repeated until either each leaf node corresponds to exactly one class or an early stopping-criterion is met. \\
+Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by an MLP that was trained to predict attributes given ResNet features (similar to $f_{AttrMLP}$). They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As a splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.
 Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \citet{kontschieder2015deep}. They learn an ensemble of trees by optimizing routing probabilities in each tree's internal nodes. Every path through a tree eventually leads to class distribution, represented in leaf nodes. All internal nodes are sigmoid-activated, differentiable stochastic functions, parameterized by an optimizable $\theta$. The final prediction is an average over the resulting decision tree forest. One downside of the resulting averaged stochastic routing decisions is the reduced interpretability as they allow for multiple possible routes. The RDTC models only yield on possible route for a given example. Therefore, we consider only an dNDF using a single tree instead of an ensemble mean.
 
 
@@ -595,7 +596,9 @@ Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \ci
 %$\rightarrow$\\
 %\textit{Dataset}\\
 %$\downarrow$\textit{Model}
+\begin{table*}
 \renewcommand{\arraystretch}{1.3}
+\caption{We compare accuracy on AWA2, aPY, and CUB of our model and other methods.}
 \begin{tabular*}{\textwidth}{c @{\extracolsep{\fill}} c c c c}
 	%\hline
 	&                                AWA2&          aPY&          CUB\\
@@ -618,6 +621,8 @@ Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \ci
 	extRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $77.8$\\
 	%\hline 
 \end{tabular*}
+\end{table*}
+
 
 \subsection{Comparing Different RDTC Models}
 We evaluate different configurations of our model on the three datasets. We compare the original aRDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline, that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy.
@@ -649,9 +654,9 @@ We evaluate different configurations of our model on the three datasets. We comp
 	& aRDTC \cite{alaniz2019explainable} & Random Baseline & remRDTC & extRDTC \\ 
 	\hline 
 	\hline
-	Class &  &  & 77.7 & 77.8 \\ 
+	Class &  77.9& 76.8 & 77.7 & 77.8 \\ 
 	\hline 
-	Attribute &  &  & 77.4 & 82.6 \\ 
+	Attribute &  68.6&  70.0& 77.4 & 82.6 \\ 
 \end{tabular*}
 
 
@@ -698,6 +703,12 @@ which is the diagonal of the expected outputs, subtracted by the product of the 
 \subsection{Risk versus Uncertainty}
 \citet{osband2016risk} suggests to distinct the variance arising from dropout neural networks, from actual uncertainty. He criticizes that the approximated posterior, which the mean and variance from multiple forward passes in a dropout network are equal to, according to \citet{gal2016dropout}, do not concentrate with more data available. According to him, this variance is rather associated with what is called risk in decision theory. There, the term risk refers to the inherent stochasticity of a model. However, this is what we previously introduced as epistemic uncertainty. This issue is thus rather about semanticity. We, therefore, acknowledge it but stick to the convention of differentiating between epistemic and aleatoric uncertainty.
 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=1\textwidth]{images/example_tree.pdf}
+	\caption{The last 5 steps of a extRDTC decision process. The model has used an uncertain attribute and the final classification is wrong. In such a case, a human user could be consulted and manually classify the image.}
+	\label{fig:example_tree}
+\end{figure}
 
 \subsection{Beyond Attribute Uncertainty}\label{sec:attr_uncertainty}
 As the only point, where uncertainty information is retrieved in our model is in the $f_{AttrMLP}$ which maps ResNet features to attributes, our model can only consider attribute uncertainty. Thus, as soon as an attribute is encountered in training, its uncertainty should converge. This may be unhelpful in realistic scenarios, where an unknown class is encountered that can be described by a set of known attributes as such an example would not yield high uncertainty. Replacing $f_{ClassMLP}$ with a Dropout MLP and computing uncertainty there as well may potentially alleviate this issue and could allow further insights.\\
@@ -711,7 +722,7 @@ In the previous sections, we introduced a model that reliably can express its un
 Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that takes a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our UncertainRDTC and decides to use it on the data(2). For each image, the model yields a classification and an explanation. However, due to climate change, some bird species that typically do not occur in the survey area have made their way into the data collected. The model has never seen such birds as they typically only appear much further south. It is highly uncertain and notifies the ornithologist (3). The ornithologist sees that this species is unknown to the model and thus rendered it uncertain, unable to make a reliable classification. However, since she knows of this species she can quickly classify it manually.
 
 % ornithology example 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.9\textwidth]{ornithology.pdf}
 	\caption{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually.}
@@ -723,10 +734,9 @@ Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithol
 To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact, of the $CO_2$ emissions caused by producing the required electricity, on the world's climate.
 The GPU's provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which, at full capacity, operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
 % epochs
-While no single model was trained for more than $100$ epochs, if we consider all models and all iterations of models, we accumulate circa $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of energy consumption.\\
+While no single model was trained for more than $100$ epochs, if we consider all models and all iterations of models, we have amassed circa $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of energy consumption.\\
 % co equivalent
 The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
-
 
 
 
