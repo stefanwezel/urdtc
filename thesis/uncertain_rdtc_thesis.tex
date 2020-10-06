@@ -530,13 +530,9 @@ We can view misclassification frequency as inverse accuracy and thus have a posi
 
 \section{Testing on Out-of-domain Data}\label{sec:zero_shot}
 An important aspect of our model is that it not only use uncertainty information but that it can also express it. Detecting unknown data through high uncertainty could make such a model applicable for robust vision systems. In cases of high uncertainty a human could be consulted, thus preventing the model from making high-risk classifications. Here, we test whether examples, far from the training data cause high uncertainty.
-%A classical zero-shot setting or a generalized zero shot setting (both described by \cite{8413121}) would not yield meaningful insights here. As in our proposed model, we only consider epistemic attribute uncertainty, uncertainty of classes should only depend on whether attributes attributes have been seen by the model and not whether classes have seen by the model, a possible weakness of our model, we further discuss in \ref{sec:attr_uncertainty}.
-
-
 
 
 \subsection{Attribute Zero Shot Setting}
-%%%%%%%%%%%% Zero Attribute
 \begin{figure}[t!]
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
