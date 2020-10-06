@@ -257,8 +257,8 @@ For classification tasks, this has been simplified by \citet{kwon2020uncertainty
 
 
 \chapter{Uncertain RDTC} % aka Methods aka Architecture
-The Recurrent decision tree model, proposed by \citet{alaniz2019explainable}, consists of two communication agents; a Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision tree allows introspection.\\
-Based on their work, we propose a model, where the AbL is aware and able to express its uncertainty for given attributes (Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
+The RDTC model, proposed by \citet{alaniz2019explainable}, consists of two communication agents; a Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision tree allows introspection.\\
+Based on their work, we propose a model, where the AbL is aware of and able to express its uncertainty for given attributes (Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
 
 
 
@@ -322,7 +322,7 @@ How much each loss contributes to the total loss can be determined by hyperparam
 
 
 \section{Uncertainty}
-Uncertainty information is a crucial part of robust vision systems. In safety-critical application, it could be used to prevent the model from using high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely OOD data), the model could decide to consult a human instead of making an overconfident classification.\\
+Uncertainty information is a crucial part of robust vision systems. In safety-critical applications, it could be used to prevent the model from using high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely OOD data), the model could decide to consult a human instead of making an overconfident classification.\\
 Uncertainty comes either from variance in data (aleatoric uncertainty) or from variance in model parameters (epistemic uncertainty). Thus, there is an inherent relationship between variance and uncertainty.
 %To get an intuition of the relationship between uncertainty and variance, let us have look at the basic equation for the variance.
 The variance of a random variable, which in our case is the variational predictive distribution $p(\hat{y} | x)$ with $y\sim p(\hat{y} | x)$, is defined as:
@@ -341,8 +341,8 @@ Var_q(p(\hat{y} | x)) &= \mathbb{E}_q \left[yy^T\right]  - \mathbb{E}_q\left[y\r
 
 
 \subsection{Estimating Epistemic Uncertainty with Dropout Neural Networks}\label{sec:dropoutuncertainty}
-Epistemic uncertainty corresponds to the variance of the model's parameters.
-In a traditional dropout neural network, there is no random dropping out of neurons in the test stage, and weights are fixed. This would result in no variance of model outputs for multiple forward passes given an input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic (model) uncertainty. In the following, we will go through their proof.\\
+Epistemic uncertainty corresponds to the variance of a model's parameters.
+In a traditional dropout neural network, there is no random dropping out of neurons in the test stage, and weights are fixed. This would result in no variance of model outputs for multiple forward passes given the same input. However, dropping out neurons in a random manner results in an inherent variance of model parameters. \citet{gal2016dropout} proof that this variance corresponds to epistemic uncertainty. In the following, we will go through their proof.\\
 The key idea is that a dropout neural net is equivalent to an approximation of a Gaussian process. To randomly dropout neurons, we sample binary values that are either $0$ or $1$ for every neuron. The sampled value is then multiplied with the neuron's value.
 In the following, the dropout neural network's layers are denoted by $L$, the respective weight matrices are denoted by $W_{l \in L}$, the bias vectors by $b_l$, the network output, given datapoint $x_i \in X$ with size $N$ by $\hat{y}_i$, and the true value by $y_i \in Y$. The objective of the network is to minimize a given loss function $E(y_i, \hat{y}_i)$. Additionally, a weighted regularization term can be added to the loss function. A popular technique is to use $L_2$ regularization, weighted by a weight decay term $\lambda$. The final resulting loss term is:
 \begin{align*}
@@ -501,12 +501,6 @@ We test our model on image datasets that provide attributes as side information.
 % describe datasets in more detail
 AwA2 is a medium scale coarse-grained dataset of 37,322 images that can be subdivided into 50 different classes of animals. Human annotators were tasked to label each image, choosing from 85 available attributes that describe each animal class. The aPY dataset is the small scale coarse-grained dataset that provides 15,339 images, annotated with 64 different attributes that describe each of the 32 classes. Finally, the most challenging dataset is a large scale fine-grained CUB. Here, the task is to classify 11,788 different images into 200 different classes. For this task, each image is annotated with 312 descriptive attributes.
 
-%\begin{figure}[t!]
-%	\centering
-%	\includegraphics[width=1\textwidth]{images/attr_heatmap.png} 
-%	\caption{Normalized attributes misclassification frequency, uncertainty and usage. Only a small subsets of attributes is actually used by the model.}
-%	\label{fig:all_attrs}
-%\end{figure}
 
 
 
@@ -522,19 +516,19 @@ AwA2 is a medium scale coarse-grained dataset of 37,322 images that can be subdi
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
 		\includegraphics[width=1\textwidth]{images/error_sigma_corr_all.pdf} 
-		\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used. Despite having a low (linear) correlation, the uncertainty seems to be higher for attributes that are often misclassified.}
+		\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used.}
 		\label{fig:correlations}
 	\end{minipage}
 \end{figure}
 %TODO have second look, once new figures are available
-The purpose of the proposed model is not only to evaluate it on benchmark datasets but also to quantitatively investigate uncertainties in the model. We examined correlations between variables such as attribute uncertainty, usage, and misclassification on the CUB dataset. From Figure \ref{fig:less_attrs} it becomes obvious that only a small subset of the 312 attributes is actually used to make decisions. We can already see, that most of the attributes that are used, however, are rarely misclassified. As apparent in the top row, all attributes here are classified correctly quite reliably. However, there seems to be no obvious correlation between uncertainty and misclassification as among the frequently used attributes (and thus reliably classified correctly) there are some attributes that have high uncertainty values.\\
-In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves further proofs this as the correlation between the two is close to $0$. It also shows a strong negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify.
+The purpose of the proposed model is not only to evaluate it on benchmark datasets but also to investigate uncertainties in the model. We examined correlations between variables such as attribute uncertainty, usage, and how often thery misclassified on the CUB dataset. From Figure \ref{fig:less_attrs} it becomes obvious that only a small subset of the 312 attributes is actually used to make decisions. We can already see, that most of the attributes that are used, however, are rarely misclassified. As apparent in the top row, all attributes here are classified correctly quite reliably. However, there seems to be no obvious correlation between uncertainty and misclassification as among the frequently used attributes (and thus reliably classified correctly) there are some attributes that have high uncertainty values.\\
+In Figure \ref{fig:correlations} we can see that this is true and uncertain attributes appear among all levels of attribute accuracy. Figure \ref{fig:corr_matrix} proves this  further as the correlation between the two is close to $0$. It also shows a negative correlation between attribute misclassification frequency and usage. We can view misclassification frequency as inverse accuracy and thus have a positive correlation of $0.5$ between usage and accuracy, suggesting that the model actively avoids attributes that it is likely to classify. Further, correlation matrix shows that there seems to be a positive correlation between usage and uncertainty. %TODO important
 
 
 
 
 \section{Testing on Out-of-domain Data}\label{sec:zero_shot}
-An important aspect of our model is that it is not only self-aware regarding uncertainty but also allows for human introspection. Here, we test whether examples, far from the training data cause high uncertainty.
+An important aspect of our model is that it not only use uncertainty information but that it can also express it. Detecting unknown data through high uncertainty could make such a model applicable for robust vision systems. In cases of high uncertainty a human could be consulted, thus preventing the model from making high-risk classifications. Here, we test whether examples, far from the training data cause high uncertainty.
 %A classical zero-shot setting or a generalized zero shot setting (both described by \cite{8413121}) would not yield meaningful insights here. As in our proposed model, we only consider epistemic attribute uncertainty, uncertainty of classes should only depend on whether attributes attributes have been seen by the model and not whether classes have seen by the model, a possible weakness of our model, we further discuss in \ref{sec:attr_uncertainty}.
 
 
@@ -557,14 +551,13 @@ An important aspect of our model is that it is not only self-aware regarding unc
 		\label{fig:unseen_attrs}
 	\end{minipage}
 \end{figure}
-As a sanity check, we first investigate attribute uncertainty in a zero-attribute setting. We exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three. We construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that possess five exclusive attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
-After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.
+As a sanity check, we first investigate attribute uncertainty in a zero-attribute setting. Therefore, we exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three. We construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that possess five exclusive attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
+After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.\\
 We observe that the 24 classes, possessing unseen attributes have an overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that possess 5 attributes, never encountered during training. We observe, that the latter have an overall higher uncertainty.\\
 Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
 
 \subsection{Zero Shot Setting}
-
-Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty.
+Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty. This would allow the model to detect unseen classes with a high probability and notify a human user of its uncertainty.
 
 %TODO check this 
 %However, the overall most frequent uncertainty value is 0 for both classes. This is due to features, not present in the image, the corresponding attribute, typically the corresponding attribute(s) will yield low uncertainty.
@@ -589,7 +582,7 @@ We compare our model to different other approaches, that either exemplify the cu
 
 
 \subsection{Comparing RDTC to Other Models}
-\begin{table*}[t]
+\begin{table*}[t]\label{tab:benchmarks}
 	\renewcommand{\arraystretch}{1.3}
 	\caption{We compare accuracy on AWA2, aPY, and CUB of our model and other methods.}
 	\begin{tabular*}{\textwidth}{c @{\extracolsep{\fill}} c c c c}
@@ -619,12 +612,14 @@ ResNet-152 \cite{he2016deep} is not explainable. Here, the ResNet was pre-traine
 XDT and DT are both traditional decision tree models that serve as a baseline. For DT \citet{alaniz2019explainable} propose the following method: DT is given features extracted by the previously introduced pre-trained ResNet. Splits are created according to values in the extracted feature vector. For each split, one feature is chosen and a split is created. This is repeated until either each leaf node corresponds to exactly one class or an early stopping-criterion is met. \\
 Moreover, \citet{alaniz2019explainable} introduce XDT, where each split is given a semantic meaning, for the splits to correspond to interpretable attributes and not only features. The XDT is therefore not given features, directly stemming from the ResNet, but attributes, learned by an MLP that was trained to predict attributes given ResNet features (similar to $f_{AttrMLP}$). They train both DT and XDT using the CART algorithm \cite{breiman1984classification}. As a splitting criterion, they chose the Gini impurity index over entropy-based methods due to its computational advantage \cite{raileanu2004theoretical}.
 Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \citet{kontschieder2015deep}. They learn an ensemble of trees by optimizing routing probabilities in each tree's internal nodes. Every path through a tree eventually leads to class distribution, represented in leaf nodes. All internal nodes are sigmoid-activated, differentiable stochastic functions, parameterized by an optimizable $\theta$. The final prediction is an average over the resulting decision tree forest. One downside of the resulting averaged stochastic routing decisions is the reduced interpretability as they allow for multiple possible routes. The RDTC models only yield one possible route for a given example. Therefore, we consider only an dNDF using a single tree instead of an ensemble mean.\\
-The results show that both strategies of our model outperform other explainable methods  and can achieve state-of-the-art performance on challenging image datasets.
+The results are stated in Table~\ref{tab:benchmarks}. We see that both strategies of our model outperform other explainable methods. The achieved accuracy is similar to that of the original RDTC model and is comparable to that of unexplainable state-of-the-art methods such as ResNet. 
+
 
 
 
 \subsection{Comparing Different RDTC Models}
-We evaluate different configurations of our model on the three datasets. We compare the original aRDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a lower class accuracy. Our model has higher attribute accuracies. We hypothesize that this is due to the model avoiding using high-risk attributes.
+We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy. Our model has higher attribute accuracies. %We hypothesize that this is due to the model avoiding using high-risk attributes. 
+%TODO think about last sentence again when new correlation matrix is available
 
 
 
@@ -660,7 +655,6 @@ We evaluate different configurations of our model on the three datasets. We comp
 
 
 \chapter{Discussion}
-
 Uncertainty estimation in deep learning is not trivial. It is an active topic of research and therefore subject of ongoing change and discussion. We will critically reflect on our work and discuss whether epistemic uncertainty (that is only considering attributes) is useful in our setting and how we could alleviate remaining issues. We also take a look at a hypothetical example, on how uncertainty information could be used.
 
 
@@ -716,23 +710,23 @@ Note that this is considering that outputs learned by the $f_{AttrMLP}$ would di
 
 \section{A Practical Example}
 In the previous sections, we introduced a model that reliably can express its uncertainties to a user in an explainable decision process. In a realistic setting, this could provide the user with valuable insights. Instead of only yielding the final classification and an explanation tree, the model can also tell the user how uncertain it is about each part of the tree. If the user sees that the model was uncertain about several attributes it used, the classification may be done manually.\\
-Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that takes a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our extRDTC model and decides to use it on the data(2). For each image, the model yields a classification and an explanation. However, due to climate change, some bird species that typically do not occur in the survey area have made their way into the data collected. The model has never seen such birds as they typically only appear much further south. It is highly uncertain and notifies the ornithologist (3). The ornithologist sees that this species is unknown to the model and thus rendered it uncertain, unable to make a reliable classification. However, since she knows of this species she can quickly classify it manually.
+Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that takes a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our model and decides to use it on the data(2). For each image, the model yields a classification and an explanation. However, due to climate change, some bird species that typically do not occur in the survey area have made their way into the collected data. The model has never seen such birds as they typically only appear much further south. It is highly uncertain and notifies the ornithologist (3). The ornithologist sees that this species is unknown to the model and thus rendered it uncertain, unable to make a reliable classification. However, since she knows of this species she can quickly classify it manually.
 
 % ornithology example 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.9\textwidth]{ornithology.pdf}
-	\caption[caption for ]{After collecting images of birds the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
+	\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	\label{fig:qual}
 \end{figure}
 \footnotetext{Graphics derived from \cite{cartoon2016desk, teacher2016, binocular2016, drone2016,bird2016}.}
 
 \section{Carbon Footprint Estimation}
 % devices
-To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact, of the $CO_2$ emissions caused by producing the required electricity, on the world's climate.
+To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact of emissions caused, on the world's climate.
 The GPU's provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which, at full capacity, operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
 % epochs
-While no single model was trained for more than $100$ epochs, if we consider all models and all iterations of models, we have amassed circa $2000$ epochs of training. Training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model can be trained for $10$ epochs. Thus for $2000$ epochs, we get $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of energy consumption.\\
+While no single model was trained for more than $100$ epochs on any dataset, if we consider all models and all iterations of models, we have amassed circa $2000$ epochs of training. Mean training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model could be trained for $10$ epochs. Thus for $2000$ epochs, we amass $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of energy consumption.\\
 % co equivalent
 The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
 
@@ -740,7 +734,7 @@ The German federal office for environmental concerns (Umweltbundesamt) estimates
 
 \chapter{Conclusion}
 Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes provided as side information. The nodes of the resulting tree correspond to attributes and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree or extend it to a ternary decision tree, where '?' is an additional option.\\
-While our proposed extension does not outperform the original aRDTC model, our remRDTC and extRDTC still outperform other explainable methods such as decision trees or dNDF. Moreover, the performance is comparable to that of uninterpretable state of the art methods, such as ResNet.\\
+While our proposed extension does not outperform the original RDTC model, our remRDTC and extRDTC still outperform other explainable methods such as decision trees or dNDF. Moreover, the performance is comparable to that of unexplainable state of the art methods, such as ResNet.\\
 Our model does not only utilize uncertainty information but also allows introspection. We use this to further investigate the relationship between attribute usage, misclassification, and uncertainty.
 We show that our model reliably yields high uncertainty for unseen attributes and classes. This would allow the model to consult a human user in cases of high uncertainty, thus making it more applicable in real-world scenarios than comparable methods.
 Finally, we critically reflect on the weaknesses of the model and propose possible improvements for future work.
