@@ -118,7 +118,7 @@ The RDTC model relies on an LSTM to classify the decision tree which updates its
 
 
 \subsection{Convolutional Neural Networks}
-CNN's have proven to be a useful tool for various image-related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers to learn to recognize low-level concepts such as edges in layers close to the input layer and high-level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled, using a pooling operation to reduce the number of necessary parameters. Our RDTC model uses a CNN to learn features from images.
+CNN's have proven to be a useful tool for various image-related tasks. They are a type of feed-forward network with the underlying concept of learning filters that correspond to features in the data. Typically this is done over multiple layers to learn to recognize low-level concepts such as edges in layers close to the input layer and high-level concepts in layers further away from the input. In practice, after convolutions and non-linearities are applied, the results are usually subsampled, using a pooling operation to reduce the number of necessary parameters. The RDTC model uses a CNN to learn to extract features from images.
 
 \begin{figure}
 	\centering
@@ -166,7 +166,7 @@ In other areas, attributes are used as well. \citet{kulkarni2013babytalk} and \c
 Communication between different agents is a popular technique in reinforcement learning \cite{havrylov2017emergence, lazaridou2018emergence, cao2018emergent, jiang2018learning, das2019tarmac}. \citet{foerster2016learning} propose to let one agent send messages containing categorical symbols that can be used by a second agent to solve a problem. Multi-agent communication has also been applied to create interpretable outputs by \citet{rodriguez2019modeling} who take into account that different agents may have different understandings of concepts. Communication between two agents is also the basis for learning in the RDTC.
 
 
-\section{Uncertainty}
+\section{Uncertainty in Machine Learning}
 Uncertainty is an important factor in human decision making. Modeling uncertainty in machine learning methods is useful for ensuring responsible decision making of algorithms and allows a user to build trust in these models. Uncertainty can arise from data. This is called aleatoric uncertainty. It compromises all kinds of noise inherent to the data. If this noise is static (i.e. limited precision of a sensor) it is called homoscedastic uncertainty. If noise is not static (i.e. occlusions in an image) the uncertainty is called heteroscedastic uncertainty \cite{kwon2020uncertainty}.\\
 On the other hand, a model can also be uncertain about its parameters. This uncertainty is called epistemic uncertainty and is high if a model has seen few data. By giving it more data, it can be reduced. Those two kinds of uncertainty are displayed for a computer vision task in Figure \ref{fig:uncertainty_example}.
 % image that shows the heteroscedastic and epistemic uncertainty
@@ -256,9 +256,9 @@ For classification tasks, this has been simplified by \citet{kwon2020uncertainty
 
 
 
-\chapter{Uncertain RDTC} % aka Methods aka Architecture
-The RDTC model, proposed by \citet{alaniz2019explainable}, consists of two communication agents; a Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision tree allows introspection.\\
-Based on their work, we propose a model, where the AbL is aware of and able to express its uncertainty for given attributes (Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}. 
+\chapter{Uncertain Recurrent Decision Tree Classifier} % aka Methods aka Architecture
+The RDTC model, proposed by \citet{alaniz2019explainable}, consists of two communicating agents; a Recurrent Decision Tree agent (RDT) and an Attribute-based Learner agent (AbL). Their common goal is to solve a classification task through communication. The RDT has no direct access to data and can only ask questions regarding attributes. Given answers by the AbL, it can then store the answers in a memory and thus incrementally build a decision tree that is used for the final classification. The learned decision tree allows introspection.\\
+Based on their work, we propose a model, where the AbL is aware of and able to express its uncertainty for given attributes (Figure \ref{fig:uncertainRDTC}). We use this uncertainty information by either preventing the RDT from using uncertain attributes or by allowing the AbL to answer with 'I don't know' additionally to the options 'Yes' or 'No'\footnote{A Pytorch implementation of our model can be found at \url{github.com/wastedsummer/urdtc}}.
 
 
 
@@ -278,7 +278,7 @@ The two agents communicate with each other through discrete messages. For a give
 The RDT is then able to ask questions by posing an index $c_t$. By accessing the AbL's answer at this index it receives answer $d_t = \hat{a}[d_t]$. This information is then used to build an internal decision tree, used for a classification output and to come up with a new question. In the following, we will go over each agent in more detail and explain how this model is trained.
 
 
-\subsection{AbL}
+\subsection{Attribute-based Learner}
 The AbL agent is a vision model, consisting of a CNN and an MLP. The CNN learns image features and the MLP learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax with temperature (TempSoftmax in Equation~\ref{eq:tempsoftmax}). The output is a tensor $p(\hat{a}|z)$ with shape $number\_attributes \times decision\_size$. This corresponds to a probability distribution over the decision option for each attribute. To get an interpretable, binary response, in the forward pass, the result of the TempSoftmax is put through an arg max function. This is, however, not differentiable. In the backward pass, it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes by indexing.
 
 \begin{align}\label{eq:tempsoftmax}
@@ -289,7 +289,7 @@ log\;\pi &\text{ are the logit values for either 'Yes', or 'No' per attribute.}%
 \end{align}
 
 
-\subsection{RDT}
+\subsection{Recurrent Decision Tree}
 The RDT agent consists of several models. At its core lies a Long-short Term Memory (LSTM). This recurrent model allows the RDT to come up with new questions, based on its hidden state $h_{t-1}$ from the previous (or initial) communication step.\\
 The $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttributeMLP}$. The output of $f_{QuestMLP}$ are logit values $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$, where $|A|$ is the number of available attributes. To get an actual index, the final output needs to be discrete. Thus we need to turn the logit values into a categorical distribution and sample from it. This is done via the Gumbel softmax function \cite{jang2016categorical}:
 \begin{align}
@@ -321,7 +321,7 @@ How much each loss contributes to the total loss can be determined by hyperparam
 
 
 
-\section{Uncertainty}
+\section{Introducing Uncertainty}
 Uncertainty information is a crucial part of robust vision systems. In safety-critical applications, it could be used to prevent the model from using high-risk strategies by leveraging attributes it is highly uncertain about for its classification. Or, if all attributes are deemed highly uncertain (for example on completely OOD data), the model could decide to consult a human instead of making an overconfident classification.\\
 Uncertainty comes either from variance in data (aleatoric uncertainty) or from variance in model parameters (epistemic uncertainty). Thus, there is an inherent relationship between variance and uncertainty.
 %To get an intuition of the relationship between uncertainty and variance, let us have look at the basic equation for the variance.
@@ -490,7 +490,7 @@ Similar to the remRDTC strategy, described in Subsection \ref{sec:remRDTC}, we p
 \begin{figure}[t!]
 	\centering
 	\includegraphics[width=1\textwidth]{images/attr_heatmap_short.pdf} 
-	\caption{Normalized attributes misclassification frequency, uncertainty, and usage for attributes that are used by the model. Some of the attributes used frequently are highly uncertain.}
+	\caption{Normalized attributes misclassification frequency, uncertainty, and usage for attributes that are used by the model. Some of the attributes used frequently are highly uncertain. Attributes are denoted by their indices.}
 	\label{fig:less_attrs}
 \end{figure}
 In this section, we briefly introduce the datasets used in our experiments. We present a quantitative evaluation of the model's uncertainty and its relation to other variables, such as attribute misclassification and attribute usage. Moreover, we investigate whether the model reliably yields high uncertainty for OOD examples. Finally, we evaluate our proposed model on benchmark image classification tasks. We compare the results to those of other explainable models and the current state of the art methods.
@@ -504,7 +504,7 @@ AwA2 is a medium scale coarse-grained dataset of 37,322 images that can be subdi
 
 
 
-\section{Statistics on Uncertainty}
+\section{Investigating Uncertainties}
 \begin{figure}
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
@@ -543,7 +543,7 @@ An important aspect of our model is that it not only use uncertainty information
 	\end{minipage}\hfill
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=1\textwidth]{images/attr_zero_shot_uncertainty_hist.pdf}
+		\includegraphics[width=1\textwidth]{images/zero_attr_class_uncertainty_hist_medians.pdf}
 		\caption{Distribution of uncertainty values of seen and unseen attributes in zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more uncertain about attributes it has not encountered in the training set.}
 		\label{fig:unseen_attrs}
 	\end{minipage}
@@ -571,7 +571,7 @@ We compare our model to different other approaches, that either exemplify the cu
 
 \begin{figure}[t!]
 	\centering
-		\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_hist_medians.pdf}
+		\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
 \caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty.}
 \label{fig:zero_shot_uncert}
 \end{figure}
@@ -600,9 +600,9 @@ We compare our model to different other approaches, that either exemplify the cu
 		\hline 
 		aRDTC\cite{alaniz2019explainable}&$98.1\pm 0.0$&$85.3\pm 0.3$  &  $77.9\pm 0.6$\\ 
 		\hline
-		remRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $77.7$\\ 
+		remRDTC(ours)&          $98.5$          &          $0.0\pm 0.0$&  $77.7$\\ 
 		\hline
-		extRDTC(ours)&          $0.0\pm 0.0$          &          $0.0\pm 0.0$&  $77.8$\\
+		extRDTC(ours)&          $98.5$          &          $0.0\pm 0.0$&  $77.8$\\
 		%\hline 
 	\end{tabular*}
 \end{table*}
@@ -635,9 +635,9 @@ We evaluate different configurations of our model on the three datasets. We comp
 		Attribute &  &  &  &  \\ 
 		&  &  &  &  \\ 
 		\textbf{aPY}& & & &\\\hline\hline
-		Class &  &  &  &  \\ 
+		Class &  98.6&  98.7&  98.5&  98.5\\ 
 		\hline 
-		Attribute &  &  &  &  \\ 
+		Attribute & 80.4 & 83.2 &  93.5&  91.1\\ 
 		&  &  &  &  \\
 		\textbf{CUB}& & & &\\\hline\hline
 		Class &  77.9& 76.8 & 77.7 & 77.8 \\ 
@@ -725,11 +725,11 @@ Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithol
 To produce our results, we relied on GPUs provided by the University of Tübingen ML Cluster of Excellence and Google. We are aware of the profound impact of emissions caused, on the world's climate.
 The GPU's provided by Google were Nvidia Tesla K80 which operate up to the thermal design power of $300\;W$ \cite{nvidia2015tesla}. Devices of the University of Tübingen GPU cluster are Tesla V100-SXM2 which, at full capacity, operate up to a thermal design power of $300\;W$ \cite{nvidia2017tesla}. These specifications are without considering cooling.\\
 % epochs
-While no single model was trained for more than $100$ epochs on any dataset, if we consider all models and all iterations of models, we have amassed circa $2000$ epochs of training. Mean training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model could be trained for $10$ epochs. Thus for $2000$ epochs, we amass $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;kW = 60000\;kWh$ of energy consumption.\\
+While no single model was trained for more than $100$ epochs on any dataset, if we consider all models and all iterations of models, we have amassed circa $2000$ epochs of training. Mean training time for one epoch was approximately $6$ minutes, or in $1$ hour, a model could be trained for $10$ epochs. Thus for $2000$ epochs, we amass $200$ hours of training time. Considering the specification of our GPUs and assuming they are running at full capacity (which is unlikely when training a single model), we get an upper bound of $200h * 300\;W = 60000\;Wh=60kWh$ of energy consumption.\\
 % co equivalent
-The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60000\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60000 = 24060\;kg$.
+The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60 = 2406\;g$.
 
-
+%TODO check watt or kilowatt
 
 \chapter{Conclusion}
 Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes provided as side information. The nodes of the resulting tree correspond to attributes and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree or extend it to a ternary decision tree, where '?' is an additional option.\\
