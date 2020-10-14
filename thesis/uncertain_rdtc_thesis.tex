@@ -239,7 +239,7 @@ To retrieve a meaningful posterior from a GP, it has to be trained in a supervis
 \STATE -draw samples from posterior-
 \STATE $L$ = cholesky\_decomposition($K_{ss}$ - $L_k^T \cdot L_k$)
 \STATE $f_{posterior}$ = $\mu$ + $L \cdot \mathcal{N}(dim=(n, num\_samples);0,1)$
-\STATE - prediction at test point $x_i$ is now the sample's value at position $i$
+\STATE - prediction at test point $x_i$ is now the sample's value at position $i$-
 	\end{algorithmic}
 \end{algorithm}
 
@@ -269,7 +269,7 @@ Based on their work, we propose a model, where the AbL is aware of and able to e
 	\label{fig:uncertainRDTC}
 \end{figure}
 
-\section{RDTC} 
+\section{The RDTC Model} 
 Before we introduce our modifications to the RDTC model, we will give a detailed explanation of its architecture, learning algorithm, and how the two agents communicate.
 
 %TODO intro
@@ -533,25 +533,34 @@ An important aspect of our model is that it not only use uncertainty information
 
 
 \subsection{Attribute Zero Shot Setting}
+%\begin{figure}[t!]
+	%\centering
+	%\begin{minipage}[t]{0.45\textwidth}
+		%\centering
+		%\includegraphics[width=1\textwidth]{images/attr_zero_shot_class_uncertainty.pdf} 
+		%\caption{Maximum likelihood model for the exponential distribution of uncertainty %per example. Examples from classes that have unseen attributes have higher %attribute uncertainties.}
+	%	\label{fig:unseen_attr_classes}
+	%\end{minipage}\hfill
+	%\begin{minipage}[t]{0.45\textwidth}
+		%\centering
+		%\includegraphics[width=1\textwidth]{images/zero_attr_class_uncertainty_hist_median%s.pdf}
+		%\caption{Distribution of uncertainty values of seen and unseen attributes in %zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more %uncertain about attributes it has not encountered in the training set.}
+%		\label{fig:unseen_attrs}
+%	\end{minipage}
+%\end{figure}
 \begin{figure}[t!]
 	\centering
-	\begin{minipage}[t]{0.45\textwidth}
-		\centering
-		\includegraphics[width=1\textwidth]{images/attr_zero_shot_class_uncertainty.pdf} 
-		\caption{Maximum likelihood model for the exponential distribution of uncertainty per example. Examples from classes that have unseen attributes have higher attribute uncertainties.}
-		\label{fig:unseen_attr_classes}
-	\end{minipage}\hfill
-	\begin{minipage}[t]{0.45\textwidth}
-		\centering
-		\includegraphics[width=1\textwidth]{images/zero_attr_class_uncertainty_hist_medians.pdf}
-		\caption{Distribution of uncertainty values of seen and unseen attributes in zero-shot-attribute setting (See Section \ref{sec:zero_shot}). The model is more uncertain about attributes it has not encountered in the training set.}
-		\label{fig:unseen_attrs}
-	\end{minipage}
+		\includegraphics[width=0.7\textwidth]{images/attr_zero_shot_class_uncertainty.pdf} 
+\caption{Maximum likelihood model for the exponential distribution of uncertainty per example. Examples from classes that possess unseen attributes have higher attribute uncertainties.}
+\label{fig:unseen_attr_classes}
 \end{figure}
+
+
 As a sanity check, we first investigate attribute uncertainty in a zero-attribute setting. Therefore, we exclude certain classes from training data, so that some attributes are never seen by the model in training. For our setting, we use the CUB dataset, as it is the most challenging out of the introduced three. We construct a setting, where certain attributes do not occur in training data, and thus have to find classes, that have exclusive attributes. In CUB, we find a set of 24 classes that possess five exclusive attributes that do not occur in any of the other classes\footnote{This setting can be replicated by using the \textit{zero\_attr\_train\_test\_split.txt} file in the provided Github repository.}.\\
-After training our model on the proposed split, we investigate (1) uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}) and (2) uncertainties of the unseen attributes themselves (Figure \ref{fig:unseen_attrs}). For (1), we computed the mean uncertainty per example. For (2), we consider all uncertainty values of each attribute.\\
-We observe that the 24 classes, possessing unseen attributes have an overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that possess 5 attributes, never encountered during training. We observe, that the latter have an overall higher uncertainty.\\
-Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
+After training our model on the proposed split, we investigate uncertainties of classes that contain unseen attributes (Figure \ref{fig:unseen_attr_classes}). We consider the mean uncertainty per example.
+%For (2), we consider all uncertainty values of each attribute.\\
+We observe that the 24 classes, possessing unseen attributes have an overall higher uncertainty. Figure \ref{fig:unseen_attr_classes} displays the modeled distribution of mean uncertainty per example, divided into classes that only posses attributes, occurring in the training data, and classes that possess 5 attributes, never encountered during training. We observe, that the latter have an overall higher uncertainty and a much wider variance. While the uncertainty values from seen attribute classes are concentrated, the uncertainty values of unseen attribute classes have a large spread.
+%Displayed in Figure \ref{fig:unseen_attrs}, is the distribution of uncertainty values of attributes available during training, and the uncertainty values of attributes, unseen by the model, before the test stage. Here, we also observe an overall higher uncertainty for the latter.
 
 \subsection{Zero Shot Setting}
 Further, we investigate the uncertainty of our model in a classical zero-shot setting. We use a split of 150+50, where 150 classes are seen during training and validation. The remaining 50 classes are only seen in the test stage. We compare uncertainties for examples from classes seen during training to uncertainties of examples from unseen classes. Figure \ref{fig:unseen_classes} shows that unseen classes generally have higher uncertainty. This would allow the model to detect unseen classes with a high probability and notify a human user of its uncertainty.
@@ -572,7 +581,7 @@ We compare our model to different other approaches, that either exemplify the cu
 \begin{figure}[t!]
 	\centering
 		\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
-\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty.}
+\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
 \label{fig:zero_shot_uncert}
 \end{figure}
 
@@ -581,7 +590,7 @@ We compare our model to different other approaches, that either exemplify the cu
 \subsection{Comparing RDTC to Other Models}
 \begin{table*}[t]
 	\renewcommand{\arraystretch}{1.3}
-	\caption{We compare accuracy on AWA2, aPY, and CUB of our model and other methods.}
+	\caption{We compare accuracy on AWA2, aPY, and CUB of our model and other methods. Standard deviations, denoted by $\pm$ are from five runs.}
 	\label{tab:benchmarks}
 	\begin{tabular*}{\textwidth}{c @{\extracolsep{\fill}} c c c c}
 		%\hline
@@ -598,11 +607,11 @@ We compare our model to different other approaches, that either exemplify the cu
 		\hline 
 		XDT&                            $73.9\pm 0.9$&$59.9\pm 1.5$  & $4.9\pm 1.3$ \\ 
 		\hline 
-		aRDTC\cite{alaniz2019explainable}&$98.1\pm 0.0$&$85.3\pm 0.3$  &  $77.9\pm 0.6$\\ 
+		aRDTC\cite{alaniz2019explainable}&$98.6$&         $86.1$&  $77.9\pm 0.6$\\ 
 		\hline
-		remRDTC(ours)&          $98.5$          &          $0.0\pm 0.0$&  $77.7$\\ 
+		remRDTC(ours)&          $98.7$          &          $86.4$&  $77.7$\\ 
 		\hline
-		extRDTC(ours)&          $98.5$          &          $0.0\pm 0.0$&  $77.8$\\
+		extRDTC(ours)&          $98.7$          &          $85.4$&  $77.8$\\
 		%\hline 
 	\end{tabular*}
 \end{table*}
@@ -630,15 +639,15 @@ We evaluate different configurations of our model on the three datasets. We comp
 		%\hline 
 		%\hline
 		\textbf{AWA2}& & & &\\\hline\hline
-		Class &  &  &  &  \\ 
+		Class &  98.6&  98.5&  98.7&  98.7\\ 
 		\hline 
-		Attribute &  &  &  &  \\ 
-		&  &  &  &  \\ 
-		\textbf{aPY}& & & &\\\hline\hline
-		Class &  98.6&  98.7&  98.5&  98.5\\ 
-		\hline 
-		Attribute & 80.4 & 83.2 &  93.5&  91.1\\ 
+		Attribute & 80.4 & 84.6 &  87.5&  82.31\\ 
 		&  &  &  &  \\
+		\textbf{aPY}& & & &\\\hline\hline
+		Class & 86.1&  86.5&  86.4&  85.4\\ 
+		\hline 
+		Attribute &  86.4&  86.2&  87.6& 87.12 \\ 
+		&  &  &  &  \\ 
 		\textbf{CUB}& & & &\\\hline\hline
 		Class &  77.9& 76.8 & 77.7 & 77.8 \\ 
 		\hline 
@@ -693,25 +702,12 @@ which is the diagonal of the expected outputs, subtracted by the product of the 
 \subsection{Risk versus Uncertainty}
 \citet{osband2016risk} suggests to distinct the variance arising from dropout neural networks, from actual uncertainty. He  criticizes that the posterior, approximated through the mean and the variance form multiple forward passes does not concentrate as more data becomes available. According to him, this variance is rather associated with what is called risk in decision theory. There, the term risk refers to the inherent stochasticity of a model. However, this is what we previously introduced as epistemic uncertainty. This issue is thus rather about semanticity. We, therefore, acknowledge it but stick to the convention of differentiating between epistemic and aleatoric uncertainty.
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=1\textwidth]{images/example_tree.pdf}
-	\caption{The last five steps of a extRDTC decision process. The model has used an uncertain attribute and the final classification is wrong. In such a case, a human user could be consulted and manually classify the image.}
-	\label{fig:example_tree}
-\end{figure}
 
 \subsection{Beyond Attribute Uncertainty}\label{sec:attr_uncertainty}
 As the only point, where uncertainty information is retrieved in our model is in the $f_{AttrMLP}$ which maps ResNet features to attributes, our model can only consider attribute uncertainty. Thus, as soon as an attribute is encountered in training, its uncertainty should converge. This may be unhelpful in realistic scenarios, where an unknown class is encountered that can be described by a set of known attributes as such an example would not yield high uncertainty. Replacing $f_{ClassMLP}$ with a Dropout MLP and computing uncertainty there as well may potentially alleviate this issue and could allow further insights.\\
 Note that this is considering that outputs learned by the $f_{AttrMLP}$ would directly correspond to attributes. This is likely not the case. As for one, we use attribute coefficient $\lambda=0.2$ in all our settings, and second, learning such a direct mapping between feature and attribute space is not a trivial problem. %TODO citation needed
 
 
-
-
-\section{A Practical Example}
-In the previous sections, we introduced a model that reliably can express its uncertainties to a user in an explainable decision process. In a realistic setting, this could provide the user with valuable insights. Instead of only yielding the final classification and an explanation tree, the model can also tell the user how uncertain it is about each part of the tree. If the user sees that the model was uncertain about several attributes it used, the classification may be done manually.\\
-Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that takes a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our model and decides to use it on the data(2). For each image, the model yields a classification and an explanation. However, due to climate change, some bird species that typically do not occur in the survey area have made their way into the collected data. The model has never seen such birds as they typically only appear much further south. It is highly uncertain and notifies the ornithologist (3). The ornithologist sees that this species is unknown to the model and thus rendered it uncertain, unable to make a reliable classification. However, since she knows of this species she can quickly classify it manually.
-
-% ornithology example 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.9\textwidth]{ornithology.pdf}
@@ -719,6 +715,13 @@ Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithol
 	\label{fig:qual}
 \end{figure}
 \footnotetext{Graphics derived from \cite{cartoon2016desk, teacher2016, binocular2016, drone2016,bird2016}.}
+
+\section{A Practical Example}
+In the previous sections, we introduced a model that reliably can express its uncertainties to a user in an explainable decision process. In a realistic setting, this could provide the user with valuable insights. Instead of only yielding the final classification and an explanation tree, the model can also tell the user how uncertain it is about each part of the tree. If the user sees that the model was uncertain about several attributes it used, the classification may be done manually.\\
+Let's consider an example (displayed in Figure \ref{fig:qual}) where an ornithologist is tasked to do a comprehensive survey of bird species and their respective numbers. Since our ornithologist is not given any helper, she decides to use a drone and a computer vision software that takes a picture of every bird it encounters (1). After letting the drone fly around in the survey area for some days, the ornithologist inspects the data and finds that the drone collected so much data that it hardly can be examined manually. Luckily, she has heard of our model and decides to use it on the data(2). For each image, the model yields a classification and an explanation. However, due to climate change, some bird species that typically do not occur in the survey area have made their way into the collected data. The model has never seen such birds as they typically only appear much further south. It is highly uncertain and notifies the ornithologist (3). The ornithologist sees that this species is unknown to the model and thus rendered it uncertain, unable to make a reliable classification. However, since she knows of this species she can quickly classify it manually.
+
+% ornithology example 
+
 
 \section{Carbon Footprint Estimation}
 % devices
@@ -730,6 +733,13 @@ While no single model was trained for more than $100$ epochs on any dataset, if 
 The German federal office for environmental concerns (Umweltbundesamt) estimates the amount of $CO_2$ necessary to produce one kilowatt-hour to be $401\;g$ \cite{icha2016entwicklung}. Considering, we required $60\;kWh$, this would result in the $CO_2$ equivalent of $401\;g \cdot 60 = 2406\;g$.
 
 %TODO check watt or kilowatt
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=1\textwidth]{images/example_tree.pdf}
+	\caption{Five steps of a extRDTC decision process. The model has used an uncertain attribute and the final classification is wrong. In such a case, a human user could be consulted and manually classify the image. Note that the the softmax classification output is highly confident despite being wrong.}
+	\label{fig:example_tree}
+\end{figure}
 
 \chapter{Conclusion}
 Extending the work of \citet{alaniz2019explainable}, we propose an explainable model that is aware of and can express its uncertainties. The original model delivers a binary decision tree as an explanation, leveraging human-interpretable attributes provided as side information. The nodes of the resulting tree correspond to attributes and the edges to either 'Yes' or 'No' answers regarding the presence of these attributes. In our work, we give the model the ability to either avoid uncertain attributes to be used in the decision tree or extend it to a ternary decision tree, where '?' is an additional option.\\
