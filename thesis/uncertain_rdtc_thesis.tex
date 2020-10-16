@@ -59,7 +59,7 @@ We, as humans have developed an intuition on how to make decisions under uncerta
 Uncertainty information is valuable, especially in real-world scenarios, where we might encounter only limited or noisy data to learn from. Or, where decisions with high consequences have to be made. 
 As machine learning becomes more prevalent in our everyday lives, in science, finance, or law, the need for methods, utilizing uncertainty becomes more evident.\\
 % overconfidence of softmax and uncertainty
-Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes \cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.\\
+Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes \cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout, nguyen2015deep, hein2019relu}.\\
 % Key contributions
 Our key contributions are to propose a model, that allows to (1) study the effect of uncertainty for attribute-based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed model's performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its effect on performance. \\
 % Example applications
@@ -143,13 +143,13 @@ The RDTC builds a decision tree by asking questions about the presence of attrib
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=0.9\textwidth,height=0.16\textheight]{images/decisiontree.pdf} 
+		\includegraphics[width=0.9\textwidth]{images/decisiontree.pdf} 
 		\caption{A decision tree splits data according to values of attributes.}
 		\label{fig:decision_tree}
 	\end{minipage}\hfill
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=0.9\textwidth,height=0.16\textheight]{images/post.pdf}
+		\includegraphics[width=0.9\textwidth]{images/post.pdf}
 		\caption{A Gaussian process is a distribution over the space of functions that describe data (blue).}
 	\end{minipage}
 \end{figure}
@@ -572,18 +572,18 @@ Further, we investigate the uncertainty of our model in a classical zero-shot se
 
 
 
-
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
+	\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
+	\label{fig:zero_shot_uncert}
+\end{figure}
 
 
 \section{How does Our Model Compare?}\label{sec:results}
 We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.
 
-\begin{figure}[t!]
-	\centering
-		\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
-\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
-\label{fig:zero_shot_uncert}
-\end{figure}
+
 
 
 
@@ -622,16 +622,7 @@ Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \ci
 The results are stated in Table~\ref{tab:benchmarks}. We see that both strategies of our model outperform other explainable methods. The achieved accuracy is similar to that of the original RDTC model and is comparable to that of unexplainable state-of-the-art methods such as ResNet. 
 
 
-
-
-\subsection{Comparing Different RDTC Models}
-We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our model has higher attribute accuracies (except for extRDTC on AWA2). %We hypothesize that this is due to the model avoiding using high-risk attributes. 
-%TODO think about last sentence again when new correlation matrix is available
-
-
-
-
-\begin{table*}[t]
+\begin{table*}[t!]
 	\caption{Class and attribute accuracy on three benchmark datasets. We compare the original aRDTC model to three different strategies of our proposed model.}
 	\label{tab:iterations}
 	\begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
@@ -655,6 +646,15 @@ We evaluate different configurations of our model on the three datasets. We comp
 		&  &  &  &  \\ 
 	\end{tabular*}
 \end{table*}
+
+
+\subsection{Comparing Different RDTC Models}
+We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our model has higher attribute accuracies (except for extRDTC on AWA2). %We hypothesize that this is due to the model avoiding using high-risk attributes. 
+%TODO think about last sentence again when new correlation matrix is available
+
+
+
+
 
 
 
