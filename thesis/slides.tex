@@ -9,7 +9,9 @@
 \usefonttheme{serif} % default family is serif
 \usepackage{fontspec}
 \usepackage{natbib}
-\bibliographystyle{natbib}	% lengthly
+%\usepackage[T1]{fontenc}
+
+\bibliographystyle{abbrv}
 %\setmainfont{Liberation Serif}
 %\setmainfont{Liberation Serif}
 \setmainfont{Comfortaa}
@@ -17,6 +19,7 @@
 
 \setbeamercolor{frametitle}{bg=orange,fg=white}
 \setbeamercolor{author in head/foot}{bg=orange,fg=white}
+
 
 
 %\setbeamertemplate{itemize items}[circle]
@@ -36,6 +39,10 @@
 \setbeamertemplate{headline}{%
 	\usebeamercolor[bg]{frametitle}\rule{\textwidth}{1cm}
 }
+\setbeamerfont{title}{size=\LARGE}
+\setbeamerfont{institute}{size=\normalsize}
+\renewcommand*{\bibfont}{\scriptsize}
+
 
 \setbeamertemplate{frametitle}{%
 	\vskip-1cm%
@@ -84,6 +91,55 @@
 	\end{itemize}
 \end{frame} 
 
+
+
+\begin{frame}
+\frametitle{What?}
+\framesubtitle{Recap}
+	\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/rdtc_intuition.png}
+	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
+	%\label{fig:qual}
+\end{figure}
+\begin{itemize}\setlength\itemsep{1em}
+	\item Two agents
+	\item One is asking questions and one is answering them
+	\item The unfolding decision process is an interpretable tree
+\end{itemize}
+\end{frame} 
+
+
+\begin{frame}
+\frametitle{What?}
+\framesubtitle{Recap}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.9\textwidth]{images/urdtc_intuition.pdf}
+	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
+	%\label{fig:qual}
+\end{figure}
+\begin{itemize}\setlength\itemsep{1em}
+	\item Two agents
+	\item One is asking questions and one is answering them
+	\item The unfolding decision process is an interpretable tree
+\end{itemize}
+\end{frame} 
+
+
+%TODO simpler graphic here
+\begin{frame}
+\frametitle{What?}
+\framesubtitle{Introducing Uncertainty}
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth]{images/uncertaintRDTC.pdf} 
+	%\caption{The RDT asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL are used by the RDT agent to make a classification each iteration.}
+	\label{fig:uncertainRDTC}
+\end{figure}
+\end{frame} 
+
+
 \begin{frame}
 \frametitle{Why do we need uncertainty?}
 \framesubtitle{A Practical Example...}
@@ -102,16 +158,33 @@
 
 
 
+
+
+
+
+
+
+
+% Related Work
 \begin{frame}
-\frametitle{test}
-%\framesubtitle{title}
+\frametitle{Background}
+\framesubtitle{Gaussian Processes (GP)}
 \begin{figure}
 	\centering
-	\includegraphics[width=1\textwidth]{images/uncertaintRDTC.pdf} 
-	%\caption{The RDT asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL are used by the RDT agent to make a classification each iteration.}
-	\label{fig:uncertainRDTC}
+	\includegraphics[width=0.4\textwidth]{images/post.pdf}
+	\begin{itemize}
+		\item Data points can be described by (infinitely) many functions
+		\item A GP is a PDF over these functions
+		\item Parameterized by mean function and covariance function
+		\item The variance resembles the model uncertainty where no data is given
+		\item 
+	\end{itemize}
+	%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
+	%\label{fig:corr_matrix}
 \end{figure}
-\end{frame} 
+\end{frame}
+
+
 
 
 % Experiments
@@ -165,21 +238,21 @@
 		&                                AWA2&          aPY&          CUB\\
 		\hline
 		\hline
-		ResNet \cite{he2016deep}&       $98.2\pm 0.0$& $85.1\pm 0.6$ & $79.0\pm 0.2$ \\ 
+		ResNet \cite{he2016deep}&       98.2$\pm$ 0.0& 85.1$\pm$ 0.6 & 79.0$\pm$ 0.2 \\ 
 		\hline 
-		DT&                             $78.0\pm 0.4$&$64.3\pm 0.6$  & $19.3\pm 0.3$  \\ 
+		DT&                             78.0$\pm$ 0.4&64.3$\pm$ 0.6  & 19.3$\pm$ 0.3  \\ 
 		\hline 
-		dNDF\cite{kontschieder2015deep}&$97.6\pm 0.2$&$85.0\pm 0.6$ & $73.8\pm 0.3$ \\ 
+		dNDF\cite{kontschieder2015deep}&97.6$\pm$ 0.2&85.0$\pm$ 0.6 & 73.8$\pm$ 0.3 \\ 
 		\hline 
-		RDTC\cite{alaniz2019explainable}&$98.0\pm 0.1$&$85.7\pm 0.7$& $78.1\pm 0.2$   \\ 
+		RDTC\cite{alaniz2019explainable}&98.0$\pm$ 0.1&85.7$\pm$ 0.7& 78.1$\pm$ 0.2   \\ 
 		\hline 
-		XDT&                            $73.9\pm 0.9$&$59.9\pm 1.5$  & $4.9\pm 1.3$ \\ 
+		XDT&                            73.9$\pm$ 0.9&59.9$\pm$ 1.5  & 4.9$\pm$ 1.3 \\ 
 		\hline 
-		aRDTC\cite{alaniz2019explainable}&$98.6$&         $86.1$&  $77.9\pm 0.6$\\ 
+		aRDTC\cite{alaniz2019explainable}&98.6&         86.1&  77.9$\pm$ 0.6\\ 
 		\hline
-		remRDTC(ours)&          $98.7$          &          $86.4$&  $77.7$\\ 
+		remRDTC(ours)&          98.7          &          86.4&  77.7\\ 
 		\hline
-		extRDTC(ours)&          $98.7$          &          $85.4$&  $77.8$\\
+		extRDTC(ours)&          98.7          &          85.4&  77.8\\
 		%\hline 
 	\end{tabular*}
 \end{table}
