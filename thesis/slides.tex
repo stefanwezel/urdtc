@@ -34,7 +34,7 @@
 \setbeamercolor{author}{fg=darkgrey}
 \setbeamercolor{institute}{fg=darkgrey}
 \setbeamercolor{date}{fg=darkgrey}
-\setbeamercolor{normal text}{fg=darkgrey}
+%\setbeamercolor{normal text}{fg=darkgrey}
 \makeatletter
 \setbeamertemplate{headline}{%
 	\usebeamercolor[bg]{frametitle}\rule{\textwidth}{1cm}
@@ -75,11 +75,17 @@
 
 \begin{document}
 
-	
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
 \begin{frame}[plain]
 	\titlepage
 \end{frame} 
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{What?}
 \framesubtitle{Setting}
@@ -92,13 +98,16 @@
 \end{frame} 
 
 
-
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{What?}
 \framesubtitle{Recap}
 	\begin{figure}
 	\centering
-	\includegraphics[width=0.7\textwidth]{images/rdtc_intuition.png}
+	\includegraphics[width=1\textwidth]{images/rdtc_intuition.pdf}
 	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	%\label{fig:qual}
 \end{figure}
@@ -110,12 +119,16 @@
 \end{frame} 
 
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{What?}
 \framesubtitle{Recap}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.9\textwidth]{images/urdtc_intuition.pdf}
+	\includegraphics[width=1\textwidth]{images/urdtc_intuition.pdf}
 	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	%\label{fig:qual}
 \end{figure}
@@ -127,19 +140,11 @@
 \end{frame} 
 
 
-%TODO simpler graphic here
-\begin{frame}
-\frametitle{What?}
-\framesubtitle{Introducing Uncertainty}
-\begin{figure}
-	\centering
-	\includegraphics[width=1\textwidth]{images/uncertaintRDTC.pdf} 
-	%\caption{The RDT asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL are used by the RDT agent to make a classification each iteration.}
-	\label{fig:uncertainRDTC}
-\end{figure}
-\end{frame} 
 
-
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Why do we need uncertainty?}
 \framesubtitle{A Practical Example...}
@@ -156,28 +161,161 @@
 	\end{itemize}
 \end{frame}
 
+\setbeamercolor{background canvas}{bg=orange}
+\setbeamercolor{normal text}{fg=white}	
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{white}$\circ$}
+\begin{frame}[plain]
+\begin{itemize}
+	\item some point
+\end{itemize}
+\end{frame}
+%\setbeamertemplate{background canvas}{bg=white}
 
 
 
-
-
-
-
-
-
-% Related Work
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
-\frametitle{Background}
-\framesubtitle{Gaussian Processes (GP)}
+\frametitle{How?}
+\framesubtitle{Architecture}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.4\textwidth]{images/post.pdf}
+	\includegraphics[width=0.9\textwidth]{images/uncertaintRDTC.pdf} 
+	%\caption{The RDT asks questions about presence, absence or uncertainty of attributes. The answers, given by the AbL are used by the RDT agent to make a classification each iteration.}
+	\label{fig:uncertainRDTC}
+\end{figure}
+\begin{itemize}
+	\item The RDT can not see the images but only ask whether an attribute is present in the image
+	\item The AbL can see the image and based on features answer the RDT's questions
+\end{itemize}
+\end{frame} 
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{How?}
+\framesubtitle{Do we get uncertainty information?}\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
+\end{figure}
+\begin{itemize}
+	\item We use dropout uncertainty estimation to retrieve uncertainty (more on that later)
+	\item We want the AbL to say 'I don't know in the case of high uncertainty
+	\item However, we want to keep the ResNet as feature extractor
+	\item Thus, we use dropout in $f_{AttrMLP}$ (more on that later)
+	\item After extracting features, we do $n$ forward passes and compute variance
+\end{itemize}
+\end{frame}
+
+
+%AbL
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Attribute-based Learner}
+\framesubtitle{Answering questions}
+\begin{itemize}
+	\item We extract features from a given image using a ResNet
+	\item A MLP maps extracted features to 'yes-no' answers indicating absence/presence of attributes
+	\item It returns a tensor with the of shape number of attributes $\times$ decision size
+	\item We get a discrete answer from our AbL though applying \begin{align*}
+	&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = d_t
+	\text{ on }
+	log\;\pi \\
+	&\text{ which are the logit values for either 'Yes', or 'No' per attribute.}
+\end{align*}
+\item The TempSoftmax serves as differentiable approximation to a one argmax returning a one-hot encoding
+\end{itemize}
+\end{frame}
+
+
+%RDT
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Building a decision tree}
+\begin{itemize}
+%	\item The RDT consists of several models:
+		\item LSTM
+		\begin{itemize}
+			\item Hidden state based on previous hidden states and new answers
+		\end{itemize}
+		\item Explicit Memory
+		\begin{itemize}
+			\item Stores all questions and corresponding answers
+			\item This is our decision tree
+		\end{itemize}
+		\item $f_{QuestMLP}$
+		\begin{itemize}
+			\item Find next question to ask based on LSTM's hidden state
+		\end{itemize}
+		\item $f_{ClassMLP}$
+		\begin{itemize}
+			\item Make classification based on LSTM's hidden state
+		\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+% Trianing
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Training}
+\framesubtitle{the two agents}
+\begin{itemize}
+	\item We optimize for class and attribute accuracy
+	\item \begin{align*}
+	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
+	\end{align*}
+	\item $\lambda$ can be used to balance the two loss terms
+	\item For all of our experiments, we use $\lambda=0.2$
+\end{itemize}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{bg=orange}
+\setbeamercolor{normal text}{fg=white}	
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{white}$\circ$}
+\begin{frame}[plain]
+\begin{itemize}
+	\item summary bullet point 1
+\end{itemize}
+\end{frame}
+%\setbeamertemplate{background canvas}{bg=default}
+
+% Related Work
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Background}
+\framesubtitle{A small excursion to Gaussian Processes (GP)}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.6\textwidth]{images/post.pdf}
 	\begin{itemize}
 		\item Data points can be described by (infinitely) many functions
 		\item A GP is a PDF over these functions
+		\item Intuition: $\rightarrow$ a GP yields a probability for function values at any given index
 		\item Parameterized by mean function and covariance function
 		\item The variance resembles the model uncertainty where no data is given
-		\item 
 	\end{itemize}
 	%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
 	%\label{fig:corr_matrix}
@@ -185,10 +323,155 @@
 \end{frame}
 
 
+\begin{frame}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\frametitle{Background}
+\framesubtitle{Dropout Uncertainty Estimation}
+	\begin{itemize}
+	\item A GP can be seen as an infinitely wide neural network
+	\item In turn, we can view a neural network with a finite amount of layers as an approximation to a GP
+	\item To compute the posterior in GP's, methods of variational inference are used
+	\begin{itemize}
+		\item GP objective gets turned into a minimization objective
+		\item For computing covariance matrix, we use Monte-Carlo integration
+	\end{itemize}
+	\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
+\end{itemize}
+\end{frame}
 
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Getting Uncertainty Information}
+\framesubtitle{through dropout uncertainty information}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/f_attrMLP.pdf}
+\end{figure}
+\begin{itemize}
+	\item We include dropout layers in our $f_{AttrMLP}$
+	\item We tested different configurations and a combination of batchnorm and dropout worked best
+\end{itemize}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{fg=darkgrey}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}	
+\frametitle{Using Uncertainty Information}
+\framesubtitle{as an inductive bias}
+\begin{itemize}
+	\item This allows us to get uncertainty information from our model
+	\item But now, we need a way to use it
+	\item we use two different strategies
+	\begin{itemize}
+		\item We prevent the model from asking questions regarding uncertain attributes $\rightarrow$ remRDTC
+		\item We give the model the ability to answer with 'I don't know' as extended vocabulary $\rightarrow$ extRDTC
+	\end{itemize}
+	\item For both strategies, we need to make sure the model does not use any gradients coming from uncertain attributes
+	\item This ensures that the uncertainty information only remains an inductive bias and the model does not misuse it
+\end{itemize}
+\end{frame}
+
+
+\setbeamercolor{background canvas}{bg=white}	
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Using Uncertainty Information}
+\framesubtitle{Removing uncertain attributes}
+\begin{figure}
+	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.png}
+\end{figure}
+\begin{itemize}
+	\item The output from $f_{QuestMLP}$ is an index that indicates the attribute in question
+	\item In case, an attribute is deemed uncertain by the AbL, we replace selection logits at those indices with $-\infty$
+	This prevents the Gumbel softmax from picking such attributes as index
+\end{itemize}
+\end{frame}
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Using Uncertainty Information}
+\framesubtitle{Extending the vocabulary}
+\begin{figure}
+	\includegraphics[width=0.6\linewidth]{images/extended_vocab.pdf}
+\end{figure}
+%\begin{itemize}
+%	\item dsjf
+%\end{itemize}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{fg=darkgrey}	
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Using Uncertainty Information}
+\framesubtitle{Extending the vocabulary}
+\begin{figure}
+	\includegraphics[width=0.6\linewidth]{images/extended_vocab_backward.pdf}
+\end{figure}
+%\begin{itemize}
+%	\item dsjf
+%\end{itemize}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{bg=orange}
+\setbeamercolor{normal text}{fg=white}	
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{white}$\circ$}	
+\begin{frame}[plain]{normal text}
+\begin{itemize}
+	\item some point
+\end{itemize}
+\end{frame}
+%\setbeamertemplate{background canvas}{bg=default}
 
 % Experiments
+\setbeamercolor{background canvas}{bg=white}	
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
+\frametitle{Experiments}
+\framesubtitle{}
+\begin{itemize}
+	\item Now, we can make our model aware of, and express its uncertainties
+	\item We use this in our experiments to:
+	\begin{itemize}
+		\item Investigate uncertainty and its relationship to other variables
+		\item Test our model on OOD data
+		\item Test the model's performance on benchmark datasets
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}	
 \frametitle{Experiments}
 \framesubtitle{Investigating Uncertainties}
 	\begin{figure}
@@ -201,7 +484,12 @@
 
 
 
-\begin{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}	
 \frametitle{Experiments}
 \framesubtitle{Investigating Uncertainties}
 	\begin{figure}
@@ -214,7 +502,10 @@
 
 
 
-
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}	
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Experiments}
 \framesubtitle{OOD Detection}
@@ -226,6 +517,10 @@
 \end{frame} 
 
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Experiments}
 \framesubtitle{Results on Benchmark Datasets}
@@ -260,7 +555,10 @@
 
 
 
-
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Experiments}
 \framesubtitle{Results on Benchmark Datasets}
@@ -290,6 +588,35 @@
 
 
 
+\setbeamercolor{background canvas}{bg=orange}
+\setbeamercolor{normal text}{fg=white}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{white}$\circ$}
+\begin{frame}[plain]
+\begin{itemize}
+	\item We have seen that the RDTC uses only a small set of attributes that it rarely misclassifies
+	\item Unseen classes yield higher uncertainty
+	\item Both our proposed strategies perform well on benchmark datasets
+\end{itemize}
+\end{frame}
+%\setbeamertemplate{background canvas}{bg=white}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Discussion}
+\framesubtitle{Looking back...}
+\begin{itemize}
+	\item The right kind of uncertianty?
+	\item Uncertainty versus risk
+	\item Beyond attribute uncertainty
+	\item
+\end{itemize}
+
+\end{frame} 
+
 
 
 
@@ -300,6 +627,10 @@
 
 
 % Conclusion
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Conclusions}
 \framesubtitle{A qualitative Example}
@@ -311,6 +642,10 @@
 \end{figure}
 \end{frame} 
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 	\bibliographystyle{alpha}
 	\bibliography{bibliography}
