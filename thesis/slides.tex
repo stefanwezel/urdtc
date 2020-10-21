@@ -169,7 +169,7 @@
 \begin{itemize}
 	\item The RDTC model yields a decision tree as explaination, revealing the reasoning behind a classification
 	\item Uncertainty allows the model to detect OOD examples
-	\item This can be important in settings where high-risk decision can be dangerous
+	\item This is useful in settings where high-risk decision can be dangerous
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=white}
@@ -196,24 +196,7 @@
 \end{frame} 
 
 
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{How?}
-\framesubtitle{Do we get uncertainty information?}\begin{figure}
-	\centering
-	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
-\end{figure}
-\begin{itemize}
-	\item We use dropout uncertainty estimation to retrieve uncertainty (more on that later)
-	\item We want the AbL to say 'I don't know in the case of high uncertainty
-	\item However, we want to keep the ResNet as feature extractor
-	\item Thus, we use dropout in $f_{AttrMLP}$ (more on that later)
-	\item After extracting features, we do $n$ forward passes and compute variance
-\end{itemize}
-\end{frame}
+
 
 
 %AbL
@@ -258,14 +241,21 @@
 			\item Stores all questions and corresponding answers
 			\item This is our decision tree
 		\end{itemize}
-		\item $f_{QuestMLP}$
-		\begin{itemize}
-			\item Find next question to ask based on LSTM's hidden state
-		\end{itemize}
 		\item $f_{ClassMLP}$
 		\begin{itemize}
 			\item Make classification based on LSTM's hidden state
 		\end{itemize}
+		\item $f_{QuestMLP}$
+		\begin{itemize}
+			\item Find next question to ask based on LSTM's hidden state
+			\item Next question is the index the $f_{QuestMLP}$ poses
+			\item To turn logits into a discrete value, Gumbel softmax is used
+			\item This allows us to sample from a categorical distribution
+			\item \begin{align*}
+				GumbelSoftmax(log\;\pi) &= \frac{exp((log\;\pi_i + g_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j + g_j)/\tau)}
+			\end{align*}
+		\end{itemize}
+		
 \end{itemize}
 \end{frame}
 
@@ -302,6 +292,12 @@
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=default}
+
+
+
+
+
+
 
 % Related Work
 \setbeamercolor{background canvas}{bg=white}
@@ -343,6 +339,30 @@
 		\item For computing covariance matrix, we use Monte-Carlo integration
 	\end{itemize}
 	\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
+	\item This in turn allows us to retrieve uncertainty estimates from dropout neural nets
+\end{itemize}
+\end{frame}
+
+
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{How?}
+\framesubtitle{Do we get uncertainty information?}\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
+\end{figure}
+\begin{itemize}
+	\item We use dropout uncertainty estimation to retrieve uncertainty (more on that later)
+	\item We want the AbL to say 'I don't know in the case of high uncertainty
+	\item However, we want to keep the ResNet as feature extractor
+	\item Thus, we use dropout in $f_{AttrMLP}$ (more on that later)
+	\item After extracting features, we do $n$ forward passes and compute variance
+	\item This corresponds to model uncertainty
 \end{itemize}
 \end{frame}
 
@@ -374,7 +394,7 @@
 \frametitle{Using Uncertainty Information}
 \framesubtitle{as an inductive bias}
 \begin{itemize}
-	\item This allows us to get uncertainty information from our model
+	\item Now, we have an uncertainty estimate
 	\item But now, we need a way to use it
 	\item we use two different strategies
 	\begin{itemize}
@@ -448,13 +468,15 @@
 	\item We can interpret the variance arising from multiple forward passes in a dropout neural net as uncertainty
 	\item We do this dropout uncertainty estimation in our $f_{AttrMLP}$
 	\item We use the retrieved uncertainty estimate for either preventing the RDT from asking questions regarding uncertain attributes or extent the AbL's vocabulary
-	
 \end{itemize}
 \end{frame}
-%\setbeamertemplate{background canvas}{bg=default}
+
+
+
+
 
 % Experiments
-\setbeamercolor{background canvas}{bg=white}	
+\setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
@@ -481,12 +503,19 @@
 \begin{frame}	
 \frametitle{Experiments}
 \framesubtitle{Investigating Uncertainties}
+\begin{itemize}
+	\item We investigate covariance of misclassification rate, uncertainty, and usage of attributes
+\end{itemize} %TODO check whether this are correlations or covariances
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.6\textwidth]{images/corr_matrix.pdf}
 		%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
 		%\label{fig:corr_matrix}
 	\end{figure}
+	\begin{itemize}
+		\item Negative correlation between usage and misclassification rate
+		\item Almost no correlation between uncertainty and misclassification rate
+	\end{itemize}
 \end{frame}
 
 
@@ -499,12 +528,19 @@
 \begin{frame}	
 \frametitle{Experiments}
 \framesubtitle{Investigating Uncertainties}
+\begin{itemize}
+	\item Let's have a look at the actual values
+	\item Uncertainty and misclassification rate (usage is represented through size)
+\end{itemize}
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.6\textwidth]{images/error_sigma_corr_all.pdf} 
 		%\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used.}
 		%\label{fig:correlations}
 	\end{figure}
+	\begin{itemize}
+		\item Uncertain attribute seem to be misclassified more often
+	\end{itemize}
 \end{frame} 
 
 
@@ -516,11 +552,19 @@
 \begin{frame}
 \frametitle{Experiments}
 \framesubtitle{OOD Detection}
+\begin{itemize}
+	\item We test extRDTC in a zero shot setting (using CUB dataset)
+	\item A quarter of all classes were never seen during training
+	\item We compare uncertainty values of seen and unseen classes
+\end{itemize}
 \begin{figure}
 	\centering
 	\includegraphics[width=0.6\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
 	%\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
 \end{figure}
+\begin{itemize}
+	\item Unseen classes have higher uncertainty values
+\end{itemize}
 \end{frame} 
 
 
@@ -616,10 +660,19 @@
 \frametitle{Discussion}
 \framesubtitle{Looking back...}
 \begin{itemize}
-	\item The right kind of uncertianty?
+	\item The right kind of uncertainty?
+	\begin{itemize}
+		\item We only consider model uncertainty (epistemic uncertainty)
+		\item Uncertainty arising from noise or occlusions in the data is not considered
+	\end{itemize}
 	\item Uncertainty versus risk
+	\begin{itemize}
+		\item The variance we view as uncertainty is often called 'risk' in decision theory
+	\end{itemize}
 	\item Beyond attribute uncertainty
-	\item
+	\begin{itemize}
+		\item Estimate uncertainty in other parts as the model (i.e. $f_{ClassMLP}$)
+	\end{itemize}
 \end{itemize}
 
 \end{frame} 
@@ -648,6 +701,31 @@
 \label{fig:example_tree}
 \end{figure}
 \end{frame} 
+
+
+
+
+
+
+
+\setbeamercolor{background canvas}{bg=orange}
+\setbeamercolor{normal text}{fg=white}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{white}$\circ$}
+\begin{frame}
+\frametitle{Conclusions}
+%\framesubtitle{}
+\begin{itemize}
+	\item We estimate uncertainty in the RDTC model
+	\item This uncertainty is used in the remRDTC and extRDTC strategies
+	\item We investigate uncertainty and its relationship to other variables
+	\item We show that OOD examples yield high uncertainty
+	\item The RDTC models using uncertainty information achieve state of the art accuracy on benchmark image classification tasks
+\end{itemize}
+\end{frame}
+
+
+
 
 \setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
