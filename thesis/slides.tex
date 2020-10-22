@@ -104,7 +104,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{What?}
-\framesubtitle{Recap}
+\framesubtitle{What is a Recurrent Decision Tree Classifier?}
 	\begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/rdtc_intuition.pdf}
@@ -112,8 +112,8 @@
 	%\label{fig:qual}
 \end{figure}
 \begin{itemize}\setlength\itemsep{1em}
-	\item Two agents
-	\item One is asking questions and one is answering them
+	\item Two communicating agents
+	\item One (which can not see the data) is asking questions and one (which can see the data) is answering them
 	\item The unfolding decision process is an interpretable tree
 \end{itemize}
 \end{frame} 
@@ -125,7 +125,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{What?}
-\framesubtitle{Recap}
+\framesubtitle{Uncertainty in a Recurrent Decision Tree Classifier}
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/urdtc_intuition.pdf}
@@ -133,9 +133,7 @@
 	%\label{fig:qual}
 \end{figure}
 \begin{itemize}\setlength\itemsep{1em}
-	\item Two agents
-	\item One is asking questions and one is answering them
-	\item The unfolding decision process is an interpretable tree
+	\item The agent, seeing the data becomes aware of its uncertainty which is communicated to the other agent
 \end{itemize}
 \end{frame} 
 
@@ -167,9 +165,11 @@
 \setbeamertemplate{itemize item}{\color{white}$\circ$}
 \begin{frame}[plain]
 \begin{itemize}
-	\item The RDTC model yields a decision tree as explaination, revealing the reasoning behind a classification
-	\item Uncertainty allows the model to detect OOD examples
-	\item This is useful in settings where high-risk decision can be dangerous
+	\item The RDTC model yields a decision tree as explanation, revealing the reasoning behind a classification
+	\item The decision tree is created through communication of two agents 
+	\item We introduce uncertainty to this model
+	\item Uncertainty allows the model to i.e. detect OOD examples
+	%\item This is useful in settings where high-risk decision can be consequential
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=white}
@@ -239,7 +239,7 @@
 		\item Explicit Memory
 		\begin{itemize}
 			\item Stores all questions and corresponding answers
-			\item This is our decision tree
+			\item Its content is the decision tree
 		\end{itemize}
 		\item $f_{ClassMLP}$
 		\begin{itemize}
@@ -250,7 +250,7 @@
 			\item Find next question to ask based on LSTM's hidden state
 			\item Next question is the index the $f_{QuestMLP}$ poses
 			\item To turn logits into a discrete value, Gumbel softmax is used
-			\item This allows us to sample from a categorical distribution
+			\item This allows us to sample an index from the logits
 			\item \begin{align*}
 				GumbelSoftmax(log\;\pi) &= \frac{exp((log\;\pi_i + g_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j + g_j)/\tau)}
 			\end{align*}
@@ -269,7 +269,7 @@
 \frametitle{Training}
 \framesubtitle{the two agents}
 \begin{itemize}
-	\item We optimize for class and attribute accuracy
+	\item We optimize for class (and attribute accuracy)
 	\item \begin{align*}
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
 	\end{align*}
@@ -287,8 +287,9 @@
 \begin{frame}[plain]
 \begin{itemize}
 	\item The RDTC is a model consisting of two agents
-	\item The RDT agent can not see the data but can ask questions whether certain attributes are present
-	\item The AbL can see the data and can answer the RDT's questions
+	\item The AbL can see the data, and can answer the RDT's questions in advance
+	\item The RDT can then choose attributes it wants to question and get an answer through indexing the AbL's answer
+	\item They have the joint objective of maximizing class accuracy (and if $\lambda>0$, attribute accuracy)
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=default}
@@ -311,7 +312,7 @@
 	\centering
 	\includegraphics[width=0.6\textwidth]{images/post.pdf}
 	\begin{itemize}
-		\item Data points can be described by (infinitely) many functions
+		\item Build on the notion that data points can be described by (infinitely) many functions
 		\item A GP is a PDF over these functions
 		\item Intuition: $\rightarrow$ a GP yields a probability for function values at any given index
 		\item Parameterized by mean function and covariance function
@@ -331,15 +332,19 @@
 \frametitle{Background}
 \framesubtitle{Dropout Uncertainty Estimation}
 	\begin{itemize}
-	\item A GP can be seen as an infinitely wide neural network
-	\item In turn, we can view a neural network with a finite amount of layers as an approximation to a GP
-	\item To compute the posterior in GP's, methods of variational inference are used
+	%\item A GP can be seen as an infinitely wide neural network
+	\item Neural network is a set of weighted linear functions, activated by some non-linearity
+	\item If we put a PDF over each weight, we retrieve a finite GP
+	\item So we can view a neural network as an approximation to a GP
+	%\item In turn, we can view a neural network with a finite amount of units as an approximation to a GP
+	\item Computing the posterior over functions requires computing integrals
+	\item Often intractable integrals are encountered, and methods of variational inference are used
 	\begin{itemize}
-		\item GP objective gets turned into a minimization objective
-		\item For computing covariance matrix, we use Monte-Carlo integration
+		\item We formulate GP objective as a minimization objective
+		\item For computing covariance function, we use Monte-Carlo integration
 	\end{itemize}
 	\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
-	\item This in turn allows us to retrieve uncertainty estimates from dropout neural nets
+	\item This in turn allows us to interpret variance arising from dropout as model uncertainty
 \end{itemize}
 \end{frame}
 
@@ -352,15 +357,15 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{How?}
-\framesubtitle{Do we get uncertainty information?}\begin{figure}
+\framesubtitle{How do we get uncertainty information?}\begin{figure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
 \end{figure}
 \begin{itemize}
-	\item We use dropout uncertainty estimation to retrieve uncertainty (more on that later)
+	\item We use this dropout uncertainty estimation to retrieve uncertainty 
 	\item We want the AbL to say 'I don't know in the case of high uncertainty
 	\item However, we want to keep the ResNet as feature extractor
-	\item Thus, we use dropout in $f_{AttrMLP}$ (more on that later)
+	\item Thus, make $f_{AttrMLP}$ a dropout MLP
 	\item After extracting features, we do $n$ forward passes and compute variance
 	\item This corresponds to model uncertainty
 \end{itemize}
@@ -373,7 +378,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Getting Uncertainty Information}
-\framesubtitle{through dropout uncertainty information}
+\framesubtitle{Estimating Uncertainty in the AbL}
 \begin{figure}
 	\centering
 	\includegraphics[width=0.7\textwidth]{images/f_attrMLP.pdf}
@@ -402,7 +407,7 @@
 		\item We give the model the ability to answer with 'I don't know' as extended vocabulary $\rightarrow$ extRDTC
 	\end{itemize}
 	\item For both strategies, we need to make sure the model does not use any gradients coming from uncertain attributes
-	\item This ensures that the uncertainty information only remains an inductive bias and the model does not misuse it
+	\item This ensures that the uncertainty information only serves as an inductive bias and the model does not misuse it
 \end{itemize}
 \end{frame}
 
@@ -420,7 +425,7 @@
 \begin{itemize}
 	\item The output from $f_{QuestMLP}$ is an index that indicates the attribute in question
 	\item In case, an attribute is deemed uncertain by the AbL, we replace selection logits at those indices with $-\infty$
-	This prevents the Gumbel softmax from picking such attributes as index
+	\item This prevents the Gumbel softmax from picking uncertain attributes as index
 \end{itemize}
 \end{frame}
 
@@ -433,11 +438,13 @@
 \frametitle{Using Uncertainty Information}
 \framesubtitle{Extending the vocabulary}
 \begin{figure}
-	\includegraphics[width=0.6\linewidth]{images/extended_vocab.pdf}
+	\includegraphics[width=0.5\linewidth]{images/extended_vocab.pdf}
 \end{figure}
-%\begin{itemize}
-%	\item dsjf
-%\end{itemize}
+\begin{itemize}
+	\item We create a binary vector with $1$s where uncertain attributes are
+	\item This gives an additional column, indicating uncertain attributes
+	\item We want to prevent conflicting answers
+\end{itemize}
 \end{frame}
 
 
@@ -495,6 +502,30 @@
 \end{frame}
 
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Experiments}
+\framesubtitle{Datasets}
+\begin{itemize}
+	\item Animals with Attributes 2 (AWA2)
+	\begin{itemize}
+		\item medium size, coarse grained
+	\end{itemize}
+	\item aPY
+	\begin{itemize}
+		\item small size, coarse grained
+	\end{itemize}	
+	\item CUB
+	\begin{itemize}
+		\item large size, fine grained 
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+
 
 \setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
@@ -504,7 +535,7 @@
 \frametitle{Experiments}
 \framesubtitle{Investigating Uncertainties}
 \begin{itemize}
-	\item We investigate covariance of misclassification rate, uncertainty, and usage of attributes
+	\item We investigate covariance of misclassification rate, uncertainty, and usage of attributes in CUB
 \end{itemize} %TODO check whether this are correlations or covariances
 	\begin{figure}
 		\centering
@@ -553,7 +584,7 @@
 \frametitle{Experiments}
 \framesubtitle{OOD Detection}
 \begin{itemize}
-	\item We test extRDTC in a zero shot setting (using CUB dataset)
+	\item We test extRDTC in a zero shot setting (using CUB)
 	\item A quarter of all classes were never seen during training
 	\item We compare uncertainty values of seen and unseen classes
 \end{itemize}
@@ -566,6 +597,45 @@
 	\item Unseen classes have higher uncertainty values
 \end{itemize}
 \end{frame} 
+
+
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\begin{frame}
+\frametitle{Experiments}
+\framesubtitle{Other models}
+\begin{itemize}
+	\item Decision Tree (DT)
+	\begin{itemize}
+		\item Use extracted ResNet features
+		\item Try to split until every leaf node corresponds to one class
+	\end{itemize}
+	\item Explainable Decision Tree (XDT)
+	\begin{itemize}
+		\item Same as DT, but using learned attribute representations instead of features
+		\item Attribute representations are created using $f_{AttrMLP}$ as head for ResNet
+	\end{itemize}	
+	\item dNDF \cite{kontschieder2015deep}
+	\begin{itemize}
+		\item Every node in the tree is a differentiable function parametrized by a learnable parameter
+		\item Every route through the tree leads to a leaf node representing a class distribution
+		\item Objective is to learn the optimal route through the tree for each example
+	\end{itemize}
+	\item aRDTC
+	\begin{itemize}
+		\item RDTC with $\lambda>0$
+	\end{itemize}
+		\item ResNet
+	\begin{itemize}
+		\item Not explainable
+		\item Trained on ImageNet and then fine-tuned for specific datasets
+	\end{itemize}
+\end{itemize}
+\end{frame}
 
 
 \setbeamercolor{background canvas}{bg=white}
