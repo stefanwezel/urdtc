@@ -20,7 +20,7 @@
 \setbeamercolor{frametitle}{bg=orange,fg=white}
 \setbeamercolor{author in head/foot}{bg=orange,fg=white}
 
-
+%\setbeamerfont{page number}{size=\Huge}
 
 %\setbeamertemplate{itemize items}[circle]
 \useinnertheme{circles}
@@ -68,12 +68,23 @@
 %}
 \makeatother
 
+
 \title{Uncertainty in\\Recurrent Decision Tree Classifiers}
 \author{Stefan Wezel}
 \institute{Explainable Machine Learning}
 \date{\today}
 
+
+%\setbeamertemplate{sidebar right}{}
+%\setbeamertemplate{footline}{%
+%	\hfill\usebeamertemplate***{navigation symbols}
+%	\hspace{1cm}\insertframenumber{}}
+\setbeamerfont{page number in head/foot}{size=\small}
+    \setbeamertemplate{footline}{%
+	\raisebox{5pt}{\makebox[\paperwidth]{\hfill\makebox[10pt]{\scriptsize\insertframenumber}}}}
+\setbeamertemplate{navigation symbols}{}
 \begin{document}
+	
 
 \setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
@@ -163,7 +174,8 @@
 \setbeamercolor{normal text}{fg=white}	
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{white}$\circ$}
-\begin{frame}[plain]
+\begin{frame}
+\frametitle{Introduction}
 \begin{itemize}
 	\item The RDTC model yields a decision tree as explanation, revealing the reasoning behind a classification
 	\item The decision tree is created through communication of two agents 
@@ -284,7 +296,8 @@
 \setbeamercolor{normal text}{fg=white}	
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{white}$\circ$}
-\begin{frame}[plain]
+\begin{frame}
+\frametitle{The RDTC Model \cite{alaniz2019explainable}}
 \begin{itemize}
 	\item The RDTC is a model consisting of two agents
 	\item The AbL can see the data, and can answer the RDT's questions in advance
@@ -418,9 +431,9 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{Removing uncertain attributes}
+\framesubtitle{Removing uncertain attributes (remRDTC)}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.png}
+	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.pdf}
 \end{figure}
 \begin{itemize}
 	\item The output from $f_{QuestMLP}$ is an index that indicates the attribute in question
@@ -436,33 +449,32 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{Extending the vocabulary}
+\framesubtitle{Extending the vocabulary (extRDTC)}
 \begin{figure}
-	\includegraphics[width=0.5\linewidth]{images/extended_vocab.pdf}
+	\includegraphics[width=0.8\linewidth]{images/extRDTC_intution.pdf}
 \end{figure}
 \begin{itemize}
-	\item We create a binary vector with $1$s where uncertain attributes are
-	\item This gives an additional column, indicating uncertain attributes
-	\item We want to prevent conflicting answers
+	\item We create a binary uncertainty vector with 1s where uncertainty is above a given threshold
+	\item This is appended to the initial answer and can be used by the RDT
 \end{itemize}
 \end{frame}
 
 
 
-\setbeamercolor{background canvas}{fg=darkgrey}	
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
-\begin{frame}
-\frametitle{Using Uncertainty Information}
-\framesubtitle{Extending the vocabulary}
-\begin{figure}
-	\includegraphics[width=0.6\linewidth]{images/extended_vocab_backward.pdf}
-\end{figure}
+%\setbeamercolor{background canvas}{fg=darkgrey}	
+%\setbeamercolor{normal text}{fg=darkgrey}
+%\usebeamercolor[fg]{normal text}
+%\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+%\begin{frame}
+%\frametitle{Using Uncertainty Information}
+%\framesubtitle{Extending the vocabulary}
+%\begin{figure}
+%	\includegraphics[width=0.6\linewidth]{images/extended_vocab_backward.pdf}
+%\end{figure}
 %\begin{itemize}
 %	\item dsjf
 %\end{itemize}
-\end{frame}
+%\end{frame}
 
 
 
@@ -470,9 +482,10 @@
 \setbeamercolor{normal text}{fg=white}	
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{white}$\circ$}	
-\begin{frame}[plain]{normal text}
+\begin{frame}{normal text}
+\frametitle{Introducing Uncertainty to the RDTC Model}
 \begin{itemize}
-	\item We can interpret the variance arising from multiple forward passes in a dropout neural net as uncertainty
+	\item We can interpret the variance arising from multiple forward passes in a dropout neural net as uncertainty \cite{gal2016dropout}
 	\item We do this dropout uncertainty estimation in our $f_{AttrMLP}$
 	\item We use the retrieved uncertainty estimate for either preventing the RDT from asking questions regarding uncertain attributes or extent the AbL's vocabulary
 \end{itemize}
@@ -512,15 +525,15 @@
 \begin{itemize}
 	\item Animals with Attributes 2 (AWA2)
 	\begin{itemize}
-		\item medium size, coarse grained
+		\item medium size, coarse grained, image classification
 	\end{itemize}
 	\item aPY
 	\begin{itemize}
-		\item small size, coarse grained
+		\item small size, coarse grained, image classification
 	\end{itemize}	
 	\item CUB
 	\begin{itemize}
-		\item large size, fine grained 
+		\item large size, fine grained, image classification
 	\end{itemize}
 \end{itemize}
 \end{frame}
@@ -607,7 +620,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Experiments}
-\framesubtitle{Other models}
+\framesubtitle{Comparison to other models}
 \begin{itemize}
 	\item Decision Tree (DT)
 	\begin{itemize}
@@ -621,7 +634,7 @@
 	\end{itemize}	
 	\item dNDF \cite{kontschieder2015deep}
 	\begin{itemize}
-		\item Every node in the tree is a differentiable function parametrized by a learnable parameter
+		\item Every node in the tree is a parametric differentiable function
 		\item Every route through the tree leads to a leaf node representing a class distribution
 		\item Objective is to learn the optimal route through the tree for each example
 	\end{itemize}
@@ -664,11 +677,11 @@
 		\hline 
 		XDT&                            73.9$\pm$ 0.9&59.9$\pm$ 1.5  & 4.9$\pm$ 1.3 \\ 
 		\hline 
-		aRDTC\cite{alaniz2019explainable}&98.6&         86.1&  77.9$\pm$ 0.6\\ 
+		aRDTC\cite{alaniz2019explainable}&98.6&         86.1&  \textbf{77.9}$\pm$ 0.6\\ 
 		\hline
-		remRDTC(ours)&          98.7          &          86.4&  77.7\\ 
+		remRDTC(ours)&          \textbf{98.7}          &          \textbf{86.4}&  77.7\\ 
 		\hline
-		extRDTC(ours)&          98.7          &          85.4&  77.8\\
+		extRDTC(ours)&          \textbf{98.7}          &          85.4&  77.8\\
 		%\hline 
 	\end{tabular*}
 \end{table}
@@ -689,19 +702,19 @@
 		%\hline 
 		%\hline
 		\textbf{AWA2}& & & &\\\hline\hline
-		Class &  98.6&  98.5&  98.7&  98.7\\ 
+		Class &  \textbf{98.6}&  98.5&  98.7&  98.7\\ 
 		\hline 
-		Attribute & 80.4 & 84.6 &  87.5&  82.31\\ 
+		Attribute & 80.4 & 84.6 &  \textbf{87.5}&  82.31\\ 
 		&  &  &  &  \\
 		\textbf{aPY}& & & &\\\hline\hline
-		Class & 86.1&  86.5&  86.4&  85.4\\ 
+		Class & 86.1&  \textbf{86.5}&  86.4&  85.4\\ 
 		\hline 
-		Attribute &  86.4&  86.2&  87.6& 87.12 \\ 
+		Attribute &  86.4&  86.2&  \textbf{87.6}& 87.1 \\ 
 		&  &  &  &  \\ 
 		\textbf{CUB}& & & &\\\hline\hline
-		Class &  77.9& 76.8 & 77.7 & 77.8 \\ 
+		Class &  \textbf{77.9}& 76.8 & 77.7 & 77.8 \\ 
 		\hline
-		Attribute &  68.6&  70.0& 77.4 & 82.6 \\ 
+		Attribute &  68.6&  70.0& 77.4 & \textbf{82.6} \\ 
 		&  &  &  &  \\ 
 	\end{tabular*}
 \end{table}
@@ -715,7 +728,7 @@
 \setbeamertemplate{itemize item}{\color{white}$\circ$}
 \begin{frame}[plain]
 \begin{itemize}
-	\item We have seen that the RDTC uses only a small set of attributes that it rarely misclassifies
+	\item We have seen that the RDTC uses attributes that it rarely misclassifies
 	\item Unseen classes yield higher uncertainty
 	\item Both our proposed strategies perform well on benchmark datasets
 \end{itemize}
@@ -735,16 +748,16 @@
 		\item We only consider model uncertainty (epistemic uncertainty)
 		\item Uncertainty arising from noise or occlusions in the data is not considered
 	\end{itemize}
-	\item Uncertainty versus risk
+	\item Other methods besides dropout uncertainty estimation
 	\begin{itemize}
-		\item The variance we view as uncertainty is often called 'risk' in decision theory
+		\item Unfortunately, they are often computationally expensive
+		\item Uncertainty estimation in neural networks is challenging in itself
 	\end{itemize}
 	\item Beyond attribute uncertainty
 	\begin{itemize}
-		\item Estimate uncertainty in other parts as the model (i.e. $f_{ClassMLP}$)
+		\item Estimate uncertainty in other parts of the model (i.e. $f_{ClassMLP}$)
 	\end{itemize}
 \end{itemize}
-
 \end{frame} 
 
 
