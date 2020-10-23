@@ -422,8 +422,9 @@
 	\includegraphics[width=0.7\textwidth]{images/f_attrMLP.pdf}
 \end{figure}
 \begin{itemize}
-	\item We include dropout layers in our $f_{AttrMLP}$
-	\item We tested different configurations and a combination of batchnorm and dropout worked best
+	\item We include dropout layers in $f_{AttrMLP}$
+	\item We tested different configurations
+	\item Combination of batchnorm and dropout worked best
 \end{itemize}
 \end{frame}
 
@@ -437,15 +438,16 @@
 \frametitle{Using Uncertainty Information}
 \framesubtitle{Uncertainty Information as Inductive Bias}
 \begin{itemize}
-	\item Now, we have an uncertainty estimate
-	\item But now, we need a way to use it
-	\item we use two different strategies
+	%\item Now, we have an uncertainty estimate
+	%\item But now, we need a way to use it
+	\item We use uncertainty in two different strategies
 	\begin{itemize}
-		\item We prevent the model from asking questions regarding uncertain attributes $\rightarrow$ remRDTC
-		\item We give the model the ability to answer with 'I don't know' as extended vocabulary $\rightarrow$ extRDTC
+		\item Prevent model from asking about uncertain attributes\\$\rightarrow$ remRDTC
+		\item We give the model the ability to answer with 'I don't know'\\$\rightarrow$ extRDTC
 	\end{itemize}
-	\item For both strategies, we need to make sure the model does not use any gradients coming from uncertain attributes
-	\item This ensures that the uncertainty information only serves as an inductive bias and the model does not misuse it
+	\item Don't allow the model to use gradients from uncertain attributes
+	\item Uncertainty information remains inductive bias% and can not be misused
+	%\item This ensures that the uncertainty information only serves as an inductive bias and the model does not misuse it
 \end{itemize}
 \end{frame}
 
@@ -461,9 +463,9 @@
 	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.pdf}
 \end{figure}
 \begin{itemize}
-	\item The output from $f_{QuestMLP}$ is an index that indicates the attribute in question
-	\item In case, an attribute is deemed uncertain by the AbL, we replace selection logits at those indices with $-\infty$
-	\item This prevents the Gumbel softmax from picking uncertain attributes as index
+	\item Reminder: output from $f_{QuestMLP}$ is attribute index %that indicates the attribute in question
+	\item If attribute is deemed uncertain by AbL, replace selection logits at those indices with $-\infty$
+	\\ $\rightarrow$ Gumbel softmax cannot pick these attributes
 \end{itemize}
 \end{frame}
 
@@ -479,8 +481,9 @@
 	\includegraphics[width=0.8\linewidth]{images/extRDTC_intution.pdf}
 \end{figure}
 \begin{itemize}
-	\item We create a binary uncertainty vector with 1s where uncertainty is above a given threshold
-	\item This is appended to the initial answer and can be used by the RDT
+	\item Binary vector with 1s where uncertainty is above threshold
+	\item Append to  initial answer% and can be used by the RDT
+	\item Prevent conflicting answers
 \end{itemize}
 \end{frame}
 
@@ -510,9 +513,14 @@
 \begin{frame}{normal text}
 \frametitle{Introducing Uncertainty}
 \begin{itemize}
-	\item We can interpret the variance arising from multiple forward passes in a dropout neural net as uncertainty \cite{gal2016dropout}
-	\item We do this dropout uncertainty estimation in our $f_{AttrMLP}$
-	\item We use the retrieved uncertainty estimate for either preventing the RDT from asking questions regarding uncertain attributes or extent the AbL's vocabulary
+	\item Gal and Ghahramani's \cite{gal2016dropout} proof allows dropout uncertainty estimation
+	\item We use their proof to introduce uncertainty to RDTC by Alaniz and Akata \cite{alaniz2019explainable}
+	\item Uncertainty information is used in two strategies
+	\begin{itemize}
+		\item remRDTC
+		\item extRDTC
+	\end{itemize}
+	%\item We use the retrieved uncertainty estimate for either preventing the RDT from asking questions regarding uncertain attributes or extent the AbL's vocabulary
 \end{itemize}
 \end{frame}
 
@@ -529,7 +537,7 @@
 \frametitle{Experiments}
 \framesubtitle{}
 \begin{itemize}
-	\item Now, we can make our model aware of, and express its uncertainties
+	\item RDTC is now aware of, and can express its uncertainties
 	\item We use this in our experiments to:
 	\begin{itemize}
 		\item Investigate uncertainty and its relationship to other variables
@@ -550,15 +558,15 @@
 \begin{itemize}
 	\item Animals with Attributes 2 (AWA2)
 	\begin{itemize}
-		\item medium size, coarse grained, image classification
+		\item medium size, coarse grained
 	\end{itemize}
 	\item aPY
 	\begin{itemize}
-		\item small size, coarse grained, image classification
+		\item small size, coarse grained
 	\end{itemize}	
 	\item CUB
 	\begin{itemize}
-		\item large size, fine grained, image classification
+		\item large size, fine grained
 	\end{itemize}
 \end{itemize}
 \end{frame}
@@ -571,13 +579,13 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}	
 \frametitle{Experiments}
-\framesubtitle{Investigating Uncertainties}
+\framesubtitle{Investigating Uncertainties in CUB}
 \begin{itemize}
-	\item We investigate covariance of misclassification rate, uncertainty, and usage of attributes in CUB
+	\item Misclassification rate, uncertainty, and usage of attributes
 \end{itemize} %TODO check whether this are correlations or covariances
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.6\textwidth]{images/corr_matrix.pdf}
+		\includegraphics[width=0.5\textwidth]{images/corr_matrix.pdf}
 		%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
 		%\label{fig:corr_matrix}
 	\end{figure}
@@ -596,14 +604,14 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}	
 \frametitle{Experiments}
-\framesubtitle{Investigating Uncertainties}
+\framesubtitle{Investigating Uncertainties in CUB}
 \begin{itemize}
-	\item Let's have a look at the actual values
-	\item Uncertainty and misclassification rate (usage is represented through size)
+	%\item Let's have a look at the actual values
+	\item Uncertainty, misclassification rate, usage (size $\propto$ usage)
 \end{itemize}
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.6\textwidth]{images/error_sigma_corr_all.pdf} 
+		\includegraphics[width=0.5\textwidth]{images/error_sigma_corr_all.pdf} 
 		%\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used.}
 		%\label{fig:correlations}
 	\end{figure}
@@ -622,13 +630,13 @@
 \frametitle{Experiments}
 \framesubtitle{OOD Detection}
 \begin{itemize}
-	\item We test extRDTC in a zero shot setting (using CUB)
-	\item A quarter of all classes were never seen during training
-	\item We compare uncertainty values of seen and unseen classes
+	\item We test extRDTC in zero shot setting (using CUB)
+	\item $\frac{1}{4}$ of classes not seen in training
+	\item Histogram of uncertainty values of seen and unseen classes
 \end{itemize}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.6\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
+	\includegraphics[width=0.5\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
 	%\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
 \end{figure}
 \begin{itemize}
@@ -754,9 +762,10 @@
 \begin{frame}
 \frametitle{Experiments}
 \begin{itemize}
-	\item We have seen that the RDTC uses attributes that it rarely misclassifies
+	\item RDTC prefers attributes that it rarely misclassifies
+	\item Uncertain attributes seem to be misclassified more often
 	\item Unseen classes yield higher uncertainty
-	\item Both our proposed strategies perform well on benchmark datasets
+	\item Both remRDTC and extRDTC perform well on benchmark tasks
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=white}
@@ -771,13 +780,13 @@
 \begin{itemize}
 	\item The right kind of uncertainty?
 	\begin{itemize}
-		\item We only consider model uncertainty (epistemic uncertainty)
-		\item Uncertainty arising from noise or occlusions in the data is not considered
+		%\item We only consider model uncertainty (epistemic uncertainty)
+		\item Uncertainty arising from noise or occlusions is not considered
 	\end{itemize}
-	\item Other methods besides dropout uncertainty estimation
+	\item Other methods of uncertainty estimation
 	\begin{itemize}
-		\item Unfortunately, they are often computationally expensive
-		\item Uncertainty estimation in neural networks is challenging in itself
+		\item Often computationally expensive
+		\item Open area of research
 	\end{itemize}
 	\item Beyond attribute uncertainty
 	\begin{itemize}
@@ -825,11 +834,12 @@
 \frametitle{Conclusions}
 %\framesubtitle{}
 \begin{itemize}
-	\item We estimate uncertainty in the RDTC model
-	\item This uncertainty is used in the remRDTC and extRDTC strategies
+	\item Based on proof by Gal and Ghahramani \cite{gal2016dropout} estimate uncertainty
+	\item Uncertainty is used in RDTC by Alaniz and Akata \cite{alaniz2019explainable}
+	\item Two strategies: remRDTC and extRDTC
 	\item We investigate uncertainty and its relationship to other variables
 	\item We show that OOD examples yield high uncertainty
-	\item The RDTC models using uncertainty information achieve state of the art accuracy on benchmark image classification tasks
+	\item Uncertain RDTC's achieve state of the art accuracy
 \end{itemize}
 \end{frame}
 
