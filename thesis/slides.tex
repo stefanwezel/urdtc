@@ -8,6 +8,7 @@
 \usefonttheme{professionalfonts} % using non standard fonts for beamer
 \usefonttheme{serif} % default family is serif
 \usepackage{fontspec}
+\usepackage{setspace}
 \usepackage{natbib}
 %\usepackage[T1]{fontenc}
 
@@ -47,7 +48,7 @@
 \setbeamertemplate{frametitle}{%
 	\vskip-1cm%
 	\begin{minipage}[c][\headheight][c]{\textwidth}%
-		\usebeamerfont{frametitle}%
+		\usebeamerfont{frametitle}
 		\strut\insertframetitle\par
 		{%
 			\ifx\insertframesubtitle\@empty%
@@ -55,7 +56,7 @@
 			{\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\strut\insertframesubtitle\par}%
 			\fi
 		}%      
-		\vspace*{-0.1cm}
+		\vspace*{0.05cm}
 	\end{minipage}%
 	\vskip-0.1em
 }
@@ -83,6 +84,8 @@
     \setbeamertemplate{footline}{%
 	\raisebox{5pt}{\makebox[\paperwidth]{\hfill\makebox[10pt]{\scriptsize\insertframenumber}}}}
 \setbeamertemplate{navigation symbols}{}
+%\onehalfspacing
+\setstretch{1.3}
 \begin{document}
 	
 
@@ -100,11 +103,11 @@
 \begin{frame}
 \frametitle{What?}
 \framesubtitle{Setting}
-	\begin{itemize}\setlength\itemsep{1em}
-	\item There are a lot of architectures that perform great on image classification tasks
-	\item Maybe, most prominently: ResNet
-	\item However, they only yield a classification
-	\item In many settings a classification is not worth much without the reasoning behind it
+	\begin{itemize}%\setlength\itemsep{1.5em}
+	\item Many powerful architectures for image classification
+	\item Prominent example: ResNet
+	\item Popular models only yield classification
+	\item No reasoning behind classification
 	\end{itemize}
 \end{frame} 
 
@@ -122,10 +125,11 @@
 	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	%\label{fig:qual}
 \end{figure}
-\begin{itemize}\setlength\itemsep{1em}
+\begin{itemize}%\setlength\itemsep{1em}
+	\item Alaniz and Akata \cite{alaniz2019explainable} propose RDTC
 	\item Two communicating agents
-	\item One (which can not see the data) is asking questions and one (which can see the data) is answering them
-	\item The unfolding decision process is an interpretable tree
+	\item Left: ask questions ---- right: look at data and answer them
+	\item Unfolding tree reveals reasoning behind classification
 \end{itemize}
 \end{frame} 
 
@@ -136,15 +140,17 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{What?}
-\framesubtitle{Uncertainty in a Recurrent Decision Tree Classifier}
+\framesubtitle{Introducing Uncertainty to a RDTC}
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/urdtc_intuition.pdf}
 	%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 	%\label{fig:qual}
 \end{figure}
-\begin{itemize}\setlength\itemsep{1em}
-	\item The agent, seeing the data becomes aware of its uncertainty which is communicated to the other agent
+\begin{itemize}%\setlength\itemsep{1em}
+	%\item The agent, seeing the data becomes aware of its uncertainty which is communicated to the other agent
+	\item Right agent is aware of uncertainties
+	\item Communicates this to left agent
 \end{itemize}
 \end{frame} 
 
@@ -163,10 +169,11 @@
 		%\caption[caption for ]{After collecting images of birds, the ornithologist lets our proposed model classify the vast amount of data. Only in cases of high uncertainty, she is consulted and can classify the image manually. \footnotemark}
 		%\label{fig:qual}
 	\end{figure}
-	\begin{itemize}\setlength\itemsep{1em}
-	\item The ornithologist is tasked to survey bird species, which she automates using a drone and computer vision software
-	\item She uses our model to go through the vast amount of collected data
-	\item Some bird species unknown to the model appear in the data. The model yields high uncertainty and the ornithologist can classify them manually
+	\begin{itemize}%\setlength\itemsep{1em}
+	\item Ornithologist surveys area using drone and CV software
+	\item Classification is automated with our model
+	\item Bird species unknown to model yield high uncertainty
+	\item Those can be classified manually
 	\end{itemize}
 \end{frame}
 
@@ -177,10 +184,10 @@
 \begin{frame}
 \frametitle{Introduction}
 \begin{itemize}
-	\item The RDTC model yields a decision tree as explanation, revealing the reasoning behind a classification
-	\item The decision tree is created through communication of two agents 
-	\item We introduce uncertainty to this model
-	\item Uncertainty allows the model to i.e. detect OOD examples
+	\item RDTC by Alaniz and Akata \cite{alaniz2019explainable} yields decision tree
+	\item Decision tree is build through communication of agents
+	\item Our aim is to introduce uncertainty to RDTC
+	\item Uncertainty allows model to i.e. detect OOD examples
 	%\item This is useful in settings where high-risk decision can be consequential
 \end{itemize}
 \end{frame}
@@ -202,8 +209,8 @@
 	\label{fig:uncertainRDTC}
 \end{figure}
 \begin{itemize}
-	\item The RDT can not see the images but only ask whether an attribute is present in the image
-	\item The AbL can see the image and based on features answer the RDT's questions
+	\item RDT can not see the images and only ask if attribute is present
+	\item The AbL can see the image and answer RDT's questions
 \end{itemize}
 \end{frame} 
 
@@ -220,16 +227,17 @@
 \frametitle{Attribute-based Learner}
 \framesubtitle{Answering questions}
 \begin{itemize}
-	\item We extract features from a given image using a ResNet
-	\item A MLP maps extracted features to 'yes-no' answers indicating absence/presence of attributes
-	\item It returns a tensor with the of shape number of attributes $\times$ decision size
-	\item We get a discrete answer from our AbL though applying \begin{align*}
+	\item Extract features from image using ResNet
+	\item MLP maps features to 'yes-no' answers
+	\item those indicate absence/presence of attributes
+	%\item It returns a tensor with the of shape number of attributes $\times$ decision size
+	\item Discrete answer from AbL though applying \begin{align*}
 	&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = d_t
 	\text{ on }
 	log\;\pi \\
-	&\text{ which are the logit values for either 'Yes', or 'No' per attribute.}
+	&\text{ which are logit values for either 'Yes', or 'No' per attribute.}
 \end{align*}
-\item The TempSoftmax serves as differentiable approximation to a one argmax returning a one-hot encoding
+\item TempSoftmax as differentiable approximation to argmax
 \end{itemize}
 \end{frame}
 
@@ -279,10 +287,10 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Training}
-\framesubtitle{the two agents}
+\framesubtitle{Joint Objective}
 \begin{itemize}
 	\item We optimize for class (and attribute accuracy)
-	\item \begin{align*}
+	\begin{align*}
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
 	\end{align*}
 	\item $\lambda$ can be used to balance the two loss terms
@@ -299,10 +307,11 @@
 \begin{frame}
 \frametitle{The RDTC Model \cite{alaniz2019explainable}}
 \begin{itemize}
-	\item The RDTC is a model consisting of two agents
-	\item The AbL can see the data, and can answer the RDT's questions in advance
-	\item The RDT can then choose attributes it wants to question and get an answer through indexing the AbL's answer
-	\item They have the joint objective of maximizing class accuracy (and if $\lambda>0$, attribute accuracy)
+	%\item RDTC is a model consisting of two agents
+	\item AbL can see data, and answer all questions in advance
+	\item RDT can choose attributes to question
+	\item Get answer through indexing
+	\item Joint objective of maximizing class accuracy (and if $\lambda>0$, attribute accuracy)
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=default}
@@ -325,11 +334,11 @@
 	\centering
 	\includegraphics[width=0.6\textwidth]{images/post.pdf}
 	\begin{itemize}
-		\item Build on the notion that data points can be described by (infinitely) many functions
+		\item Data can be described by (infinitely) many functions
 		\item A GP is a PDF over these functions
-		\item Intuition: $\rightarrow$ a GP yields a probability for function values at any given index
+		\item Intuition: $\rightarrow$ GP yields probability for function values %at any index
 		\item Parameterized by mean function and covariance function
-		\item The variance resembles the model uncertainty where no data is given
+		\item Variance corresponds to model uncertainty
 	\end{itemize}
 	%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
 	%\label{fig:corr_matrix}
@@ -346,18 +355,34 @@
 \framesubtitle{Dropout Uncertainty Estimation}
 	\begin{itemize}
 	%\item A GP can be seen as an infinitely wide neural network
-	\item Neural network is a set of weighted linear functions, activated by some non-linearity
-	\item If we put a PDF over each weight, we retrieve a finite GP
-	\item So we can view a neural network as an approximation to a GP
+	\item Gal and Ghahramani \cite{gal2016dropout} proof that variance from dropout corresponds to model uncertainty
+	\item We use their proof as foundation for our uncertainty estimate
+	%\item Key idea is to rewrite objective of Variational GP as dropout neural net objective
+	\item Neural net is set of weighted linear functions, activated by non-linearity
+	\item Putting PDF over each weight creates finite GP
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
+\frametitle{Background}
+\framesubtitle{Dropout Uncertainty Estimation}
+\begin{itemize}
+	%\item A GP can be seen as an infinitely wide neural network
+	\item We can view neural net as approximation to GP
 	%\item In turn, we can view a neural network with a finite amount of units as an approximation to a GP
-	\item Computing the posterior over functions requires computing integrals
-	\item Often intractable integrals are encountered, and methods of variational inference are used
+	\item Posterior over functions requires computing integrals
+	\item Intractable integrals require methods of variational inference
 	\begin{itemize}
-		\item We formulate GP objective as a minimization objective
-		\item For computing covariance function, we use Monte-Carlo integration
+		\item GP objective $\rightarrow$ minimization objective
+		\item For covariance function $\rightarrow$ Monte-Carlo integration
 	\end{itemize}
-	\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
-	\item This in turn allows us to interpret variance arising from dropout as model uncertainty
+	\item Variational GP's objective can be rewritten as dropout net
+	%\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
+	\item Variance arising from dropout can be interpreted as model uncertainty
 \end{itemize}
 \end{frame}
 
@@ -375,12 +400,12 @@
 	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
 \end{figure}
 \begin{itemize}
-	\item We use this dropout uncertainty estimation to retrieve uncertainty 
-	\item We want the AbL to say 'I don't know in the case of high uncertainty
-	\item However, we want to keep the ResNet as feature extractor
-	\item Thus, make $f_{AttrMLP}$ a dropout MLP
-	\item After extracting features, we do $n$ forward passes and compute variance
-	\item This corresponds to model uncertainty
+	\item We use Gal and Ghahramani's \cite{gal2016dropout} proof to estimate uncertainty 
+	\item We want AbL to say '?' in the case of high uncertainty
+	%\item However, we want to keep the ResNet as feature extractor
+	\item Make $f_{AttrMLP}$ a dropout MLP
+	\item After extracting features $\rightarrow$ compute $Var(n \;forward\;passes)$
+	\item According to proof, this corresponds to model uncertainty
 \end{itemize}
 \end{frame}
 
@@ -410,7 +435,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}	
 \frametitle{Using Uncertainty Information}
-\framesubtitle{as an inductive bias}
+\framesubtitle{Uncertainty Information as Inductive Bias}
 \begin{itemize}
 	\item Now, we have an uncertainty estimate
 	\item But now, we need a way to use it
@@ -483,7 +508,7 @@
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{white}$\circ$}	
 \begin{frame}{normal text}
-\frametitle{Introducing Uncertainty to the RDTC Model}
+\frametitle{Introducing Uncertainty}
 \begin{itemize}
 	\item We can interpret the variance arising from multiple forward passes in a dropout neural net as uncertainty \cite{gal2016dropout}
 	\item We do this dropout uncertainty estimation in our $f_{AttrMLP}$
@@ -726,7 +751,8 @@
 \setbeamercolor{normal text}{fg=white}
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{white}$\circ$}
-\begin{frame}[plain]
+\begin{frame}
+\frametitle{Experiments}
 \begin{itemize}
 	\item We have seen that the RDTC uses attributes that it rarely misclassifies
 	\item Unseen classes yield higher uncertainty
@@ -815,6 +841,7 @@
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
+\frametitle{References}
 	\bibliographystyle{alpha}
 	\bibliography{bibliography}
 \end{frame}
