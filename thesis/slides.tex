@@ -410,6 +410,127 @@
 \end{frame}
 
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Attribute-based Learner}
+\framesubtitle{Extracting features}
+  \begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			\item
+			% Your text here
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+			% Your image included here
+			\includegraphics[width=\textwidth]{images/urdtc_parts_resnet.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Attribute-based Learner}
+\framesubtitle{Mapping features to attributes}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			\item
+			% Your text here
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+			% Your image included here
+			\includegraphics[width=\textwidth]{images/urdtc_parts_attrMLP.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{LSTM}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			% Your text here
+			\item
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+			% Your image included here
+			\includegraphics[width=\textwidth]{images/urdtc_parts_lstm.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Choosing questions}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			% Your text here
+			\item
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+			% Your image included here
+			\includegraphics[width=\textwidth]{images/urdtc_parts_questMLP.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Making a classification}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			\item 
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+			% Your image included here
+			\includegraphics[width=\textwidth]{images/urdtc_parts_classMLP.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+
+
+
+
 \setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
 \usebeamercolor[fg]{normal text}
@@ -582,7 +703,7 @@
 \framesubtitle{Investigating Uncertainties in CUB}
 \begin{itemize}
 	\item Misclassification rate, uncertainty, and usage of attributes
-\end{itemize} %TODO check whether this are correlations or covariances
+\end{itemize} 
 	\begin{figure}
 		\centering
 		\includegraphics[width=0.5\textwidth]{images/corr_matrix.pdf}
@@ -590,8 +711,8 @@
 		%\label{fig:corr_matrix}
 	\end{figure}
 	\begin{itemize}
-		\item Negative correlation between usage and misclassification rate
-		\item Almost no correlation between uncertainty and misclassification rate
+		\item Positive correlation between usage and accuracy
+		\item Almost no correlation between uncertainty and accuracy
 	\end{itemize}
 \end{frame}
 
