@@ -278,7 +278,125 @@
 		
 \end{itemize}
 \end{frame}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Attribute-based Learner}
+\framesubtitle{Extracting features}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			\item Extract features using ResNet
+			\item Then pass to $f_{AttrMLP}$
+			% Your text here
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+		% Your image included here
+		\includegraphics[width=\textwidth]{images/urdtc_parts_resnet.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
 
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Attribute-based Learner}
+\framesubtitle{Mapping features to attributes}
+\begin{columns}[T]
+\begin{column}{.5\textwidth}
+	\begin{itemize}
+		\item Map features to answers
+		\item Yes, No, ? for each attribute
+		\item Discrete answers with TempSoftmax
+		\begin{align*}
+		&\frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)}\\
+		& = \hat{a}
+		\end{align*}
+		% Your text here
+	\end{itemize}
+\end{column}
+\begin{column}{.5\textwidth}
+	% Your image included here
+	\includegraphics[width=\textwidth]{images/urdtc_parts_attrMLP.pdf}
+\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{LSTM}
+\begin{columns}[T]
+\begin{column}{.5\textwidth}
+\begin{itemize}
+	% Your text here
+	\item Hidden state based on answers
+	\item and explicit memory
+	\item Basis for next question
+	\item Basis for classification
+\end{itemize}
+\end{column}
+\begin{column}{.5\textwidth}
+% Your image included here
+\includegraphics[width=\textwidth]{images/urdtc_parts_lstm.pdf}
+\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Choosing questions}
+\begin{columns}[T]
+\begin{column}{.5\textwidth}
+\begin{itemize}
+% Your text here
+	\item Pose new question
+	\item based on LSTM
+	\item $c_t \sim p(c_t)$
+	\item GumbelSoftmax
+	\item Sample from categorical distribution
+	\item $d_t = \hat{a}\left[c_t\right]$
+\end{itemize}
+\end{column}
+\begin{column}{.5\textwidth}
+% Your image included here
+\includegraphics[width=\textwidth]{images/urdtc_parts_questMLP.pdf}
+\end{column}
+\end{columns}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Making a classification}
+\begin{columns}[T]
+\begin{column}{.5\textwidth}
+\begin{itemize}
+	\item Classification in each communication step
+	\item For classification loss
+\end{itemize}
+\end{column}
+\begin{column}{.5\textwidth}
+% Your image included here
+\includegraphics[width=\textwidth]{images/urdtc_parts_classMLP.pdf}
+\end{column}
+\end{columns}
+\end{frame}
 
 % Trianing
 \setbeamercolor{background canvas}{bg=white}
@@ -289,12 +407,13 @@
 \frametitle{Training}
 \framesubtitle{Joint Objective}
 \begin{itemize}
-	\item We optimize for class (and attribute accuracy)
+	\item Optimize for class (and attribute accuracy)
 	\begin{align*}
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
 	\end{align*}
 	\item $\lambda$ can be used to balance the two loss terms
 	\item For all of our experiments, we use $\lambda=0.2$
+	\item Discourage deep trees%with $T$ %(number of communication steps)
 \end{itemize}
 \end{frame}
 
@@ -311,7 +430,7 @@
 	\item AbL can see data, and answer all questions in advance
 	\item RDT can choose attributes to question
 	\item Get answer through indexing
-	\item Joint objective of maximizing class accuracy (and if $\lambda>0$, attribute accuracy)
+	\item Joint objective of maximizing class and attribute accuracy
 \end{itemize}
 \end{frame}
 %\setbeamertemplate{background canvas}{bg=default}
@@ -413,109 +532,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{Attribute-based Learner}
-\framesubtitle{Extracting features}
-  \begin{columns}[T]
-	\begin{column}{.5\textwidth}
-		\begin{itemize}
-			\item
-			% Your text here
-		\end{itemize}
-	\end{column}
-	\begin{column}{.5\textwidth}
-			% Your image included here
-			\includegraphics[width=\textwidth]{images/urdtc_parts_resnet.pdf}
-	\end{column}
-\end{columns}
-\end{frame}
 
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{Attribute-based Learner}
-\framesubtitle{Mapping features to attributes}
-\begin{columns}[T]
-	\begin{column}{.5\textwidth}
-		\begin{itemize}
-			\item
-			% Your text here
-		\end{itemize}
-	\end{column}
-	\begin{column}{.5\textwidth}
-			% Your image included here
-			\includegraphics[width=\textwidth]{images/urdtc_parts_attrMLP.pdf}
-	\end{column}
-\end{columns}
-\end{frame}
-
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{Recurrent Decision Tree}
-\framesubtitle{LSTM}
-\begin{columns}[T]
-	\begin{column}{.5\textwidth}
-		\begin{itemize}
-			% Your text here
-			\item
-		\end{itemize}
-	\end{column}
-	\begin{column}{.5\textwidth}
-			% Your image included here
-			\includegraphics[width=\textwidth]{images/urdtc_parts_lstm.pdf}
-	\end{column}
-\end{columns}
-\end{frame}
-
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{Recurrent Decision Tree}
-\framesubtitle{Choosing questions}
-\begin{columns}[T]
-	\begin{column}{.5\textwidth}
-		\begin{itemize}
-			% Your text here
-			\item
-		\end{itemize}
-	\end{column}
-	\begin{column}{.5\textwidth}
-			% Your image included here
-			\includegraphics[width=\textwidth]{images/urdtc_parts_questMLP.pdf}
-	\end{column}
-\end{columns}
-\end{frame}
-
-\setbeamercolor{background canvas}{bg=white}
-\setbeamercolor{normal text}{fg=darkgrey}
-\usebeamercolor[fg]{normal text}
-\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
-\begin{frame}
-\frametitle{Recurrent Decision Tree}
-\framesubtitle{Making a classification}
-\begin{columns}[T]
-	\begin{column}{.5\textwidth}
-		\begin{itemize}
-			\item 
-		\end{itemize}
-	\end{column}
-	\begin{column}{.5\textwidth}
-			% Your image included here
-			\includegraphics[width=\textwidth]{images/urdtc_parts_classMLP.pdf}
-	\end{column}
-\end{columns}
-\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

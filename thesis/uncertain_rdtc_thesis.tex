@@ -282,7 +282,7 @@ The RDT is then able to ask questions by posing an index $c_t$. By accessing the
 The AbL agent is a vision model, consisting of a CNN and an MLP. The CNN learns image features and the MLP ($f_{AttrMLP}$) learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttrMLP}$ and the resulting vector of logits is put through a softmax with temperature (TempSoftmax in Equation~\ref{eq:tempsoftmax}). The output is a tensor $p(\hat{a}|z)$ with shape $\text{number attributes} \times \text{decision size}$. This corresponds to a probability distribution over the decision option for each attribute. To get an interpretable, binary response, in the forward pass, the result of the TempSoftmax is put through an arg max function. This is, however, not differentiable. In the backward pass, it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes through indexing.
 
 \begin{align}\label{eq:tempsoftmax}
-&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = d_t,\\
+&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = \hat{a},\\
 \text{ where }
 log\;\pi &\text{ are the logit values for either 'Yes', or 'No' per attribute.}%&=log\;p(c_t|h_{t-1})\text{ , and thus:}
 %c_t &= GumbelSoftmax(log\;p(c_t|h_{t-1})).
