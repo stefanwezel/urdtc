@@ -59,7 +59,7 @@ We, as humans have developed an intuition on how to make decisions under uncerta
 Uncertainty information is valuable, especially in real-world scenarios, where we might encounter only limited or noisy data to learn from. Or, where decisions with high consequences have to be made. 
 As machine learning becomes more prevalent in our everyday lives, in science, finance, or law, the need for methods, utilizing uncertainty becomes more evident.\\
 % overconfidence of softmax and uncertainty
-Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes \cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout}.\\
+Unfortunately, the output of most neural network architectures does not contain uncertainty information. For example, in classification, typical architectures use a softmax layer, to turn model outputs into a probability density function over classes \cite{nwankpa2018activation}. Since it is a probability distribution, the softmax output is often misinterpreted as a measure of how certain a model is regarding each class \cite{sensoy2018evidential}. However, this distribution only arises from each value relative to every other value and is a point estimate, turned into a distribution. The point estimate cannot carry any uncertainty information and the softmax certainly does not add such information. This allows a softmax class probability to be overconfident for a highly uncertain class \cite{gal2016dropout, nguyen2015deep, hein2019relu}.\\
 % Key contributions
 Our key contributions are to propose a model, that allows to (1) study the effect of uncertainty for attribute-based recurrent decision tree classifier and actively uses and expresses uncertainty information. We (2) test the proposed model's performance on popular datasets and compare it to different state-of-the-art methods. We investigate uncertainties in the model and data and evaluate its effect on performance. \\
 % Example applications
@@ -143,13 +143,13 @@ The RDTC builds a decision tree by asking questions about the presence of attrib
 	\centering
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=0.9\textwidth,height=0.16\textheight]{images/decisiontree.pdf} 
+		\includegraphics[width=0.9\textwidth]{images/decisiontree.pdf} 
 		\caption{A decision tree splits data according to values of attributes.}
 		\label{fig:decision_tree}
 	\end{minipage}\hfill
 	\begin{minipage}[t]{0.45\textwidth}
 		\centering
-		\includegraphics[width=0.9\textwidth,height=0.16\textheight]{images/post.pdf}
+		\includegraphics[width=0.9\textwidth]{images/post.pdf}
 		\caption{A Gaussian process is a distribution over the space of functions that describe data (blue).}
 	\end{minipage}
 \end{figure}
@@ -279,10 +279,10 @@ The RDT is then able to ask questions by posing an index $c_t$. By accessing the
 
 
 \subsection{Attribute-based Learner}
-The AbL agent is a vision model, consisting of a CNN and an MLP. The CNN learns image features and the MLP ($f_{AttributeMLP}$) learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttributeMLP}$ and the resulting vector of logits is put through a softmax with temperature (TempSoftmax in Equation~\ref{eq:tempsoftmax}). The output is a tensor $p(\hat{a}|z)$ with shape $\text{number attributes} \times \text{decision size}$. This corresponds to a probability distribution over the decision option for each attribute. To get an interpretable, binary response, in the forward pass, the result of the TempSoftmax is put through an arg max function. This is, however, not differentiable. In the backward pass, it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes through indexing.
+The AbL agent is a vision model, consisting of a CNN and an MLP. The CNN learns image features and the MLP ($f_{AttrMLP}$) learns a mapping from features to human-annotated attributes (if available). For all experiments, we use a ResNet \cite{he2016deep} to extract features. For a given image $x$, the CNN extracts feature vector $z$. This is passed to the $f_{AttrMLP}$ and the resulting vector of logits is put through a softmax with temperature (TempSoftmax in Equation~\ref{eq:tempsoftmax}). The output is a tensor $p(\hat{a}|z)$ with shape $\text{number attributes} \times \text{decision size}$. This corresponds to a probability distribution over the decision option for each attribute. To get an interpretable, binary response, in the forward pass, the result of the TempSoftmax is put through an arg max function. This is, however, not differentiable. In the backward pass, it is therefore replaced by the identity function. Thus, the final response of the AbL agent for a given image $x$ is $\hat{a} = argmax(p(\hat{a}|z))$. The RDT agent can then access answers for specific attributes through indexing.
 
 \begin{align}\label{eq:tempsoftmax}
-&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = d_t,\\
+&TempSoftmax(log\;\pi) = \frac{exp((log\;\pi_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j)/\tau)} = \hat{a},\\
 \text{ where }
 log\;\pi &\text{ are the logit values for either 'Yes', or 'No' per attribute.}%&=log\;p(c_t|h_{t-1})\text{ , and thus:}
 %c_t &= GumbelSoftmax(log\;p(c_t|h_{t-1})).
@@ -291,7 +291,7 @@ log\;\pi &\text{ are the logit values for either 'Yes', or 'No' per attribute.}%
 
 \subsection{Recurrent Decision Tree}
 The RDT agent consists of several models. At its core lies a LSTM. This recurrent model allows the RDT to come up with new questions, based on its hidden state $h_{t-1}$ from the previous (or initial) communication step.\\
-The MLP $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttributeMLP}$. The output of $f_{QuestMLP}$ are logit values $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$, where $|A|$ is the number of available attributes. To get an actual index, the final output needs to be discrete. Thus we need to turn the logit values into a categorical distribution and sample from it. This is done via the Gumbel softmax function \cite{jang2016categorical}:
+The MLP $f_{QuestMLP}$ is responsible for thinking of new questions by returning an index that can be used to access attribute information in the response from $f_{AttrMLP}$. The output of $f_{QuestMLP}$ are logit values $log\;p(c_t|h_{t-1})$ over possible indices $c_t \ in \lbrace 1,2,...,|A| \rbrace$, where $|A|$ is the number of available attributes. To get an actual index, the final output needs to be discrete. Thus we need to turn the logit values into a categorical distribution and sample from it. This is done via the Gumbel softmax function \cite{jang2016categorical}:
 \begin{align}
 		GumbelSoftmax(log\;\pi) &= \frac{exp((log\;\pi_i + g_i)/\tau)}{\sum_{j=1}^{K}exp((log\;\pi_j + g_j)/\tau)}\text{ , where}\\
 			log\;\pi &=log\;p(c_t|h_{t-1})\text{ , and thus:}\\
@@ -366,7 +366,7 @@ where we see that the posterior over $w$, given data is intractable, which is wh
 \end{align*}
 As we have seen in Section \ref{sec:vi}, this would require access to the true posterior, which we cannot compute. Therefore, we maximize the log evidence lower bound
 \begin{align*}
-\mathcal{L}_{VI} := \int q_{\theta}(w) log p (Y|X, w)dw - KL(q_{\theta}(w)||p(w))
+\mathcal{L}_{VI} := \int q_{\theta}(w) log\;p (Y|X, w)dw - KL(q_{\theta}(w)||p(w))
 \end{align*}
 and assume $p(w)$ to be a standard Gaussian. As discussed in Section \ref{sec:vi}, we effectively turn computing integrals into an optimization problem, where we need to compute derivatives. Using the optimized variational distribution $q_{\theta}^*(w)$, we can compute an approximate predictive posterior 
 \begin{align*}
@@ -404,13 +404,13 @@ q_{\theta}(W_1) = \Pi q_{\theta}(w_q), \text{ and } q_{\theta}(w_q) = p_1\mathca
 We eventually want to recover a dropout neural network (as specified in Equation~\ref{eq:dropout}) from our GP. In our dropout network, we rely on sampling from a Bernoulli random variable. In our GP, we, so far, sample from a mixture of Gaussian distributions. We cannot change this, because the KL-divergence between a discrete distribution (i.e. Bernoulli) and a continuous distribution (i.e. Gaussian) is not defined. Therefore, we will make two assumptions about the Gaussian mixture in Equation~\ref{eq:gaussian_mixture}.\\
 We set $p$ to a fixed value. Also, we want the second term of the sum to be zero. To sample zero from a zero-centered Gaussian distribution with a very high probability, we simply set the standard deviation to a very small value. Small enough so that a device with limited precision will view it as zero and always return zero. These two assumptions leave us with a Gaussian distribution that resembles a Bernoulli distribution. Thus, we are effectively sampling from a Bernoulli random variable in our GP, with a still defined KL-divergence. We get
 \begin{align*}
-\mathcal{N}_{GP-MC} \approx log p(Y|X, \hat{w}) - \frac{p_1 l^2}{2} ||M_1||^2_2 - \frac{p_2 l^2}{2}||M_2||^2_2 - \frac{l^2}{2}||m||^2_2 \text{, with } \hat{w} \sim q_{\theta}(w)
+\mathcal{N}_{GP-MC} \approx log\;p(Y|X, \hat{w}) - \frac{p_1 l^2}{2} ||M_1||^2_2 - \frac{p_2 l^2}{2}||M_2||^2_2 - \frac{l^2}{2}||m||^2_2 \text{, with } \hat{w} \sim q_{\theta}(w)
 \end{align*}
 as approximated log evidence lower bound.
 % here, the maximizing variational parameters are the same as in the ELBO specified, above
 To recover the dropout objective from Equation \ref{eq:dropout}, we can scale it by a constant $\frac{1}{N \tau}$.
 \begin{align*}
-\mathcal{L}_{GP_MC} \propto  - \frac{1}{2N} \sum_{n=1}^N ||y_n - \hat{y}_n||^2_2 -  \frac{p_1 l^2}{2N\tau} ||M_1||^2_2 - \frac{p_2 l^2}{2N\tau}||M_2||^2_2 - \frac{l^2}{2N\tau}||m||^2_2
+\mathcal{L}_{GP_{MC}} \propto  - \frac{1}{2N} \sum_{n=1}^N ||y_n - \hat{y}_n||^2_2 -  \frac{p_1 l^2}{2N\tau} ||M_1||^2_2 - \frac{p_2 l^2}{2N\tau}||M_2||^2_2 - \frac{l^2}{2N\tau}||m||^2_2
 \end{align*}
 and set hyperparameters $\tau$ and $l$ to appropriate values. According to \citet{gal2016dropout}, this generalizes to deep GPs and Dropout networks with more than one hidden layer, as well.
 
@@ -422,7 +422,7 @@ and set hyperparameters $\tau$ and $l$ to appropriate values. According to \cite
 	\caption{We used both BatchNorm and dropout layers for $f_{attrMLP}$.}
 	\label{fig:f_attrMLP}
 \end{figure}
-The RDTC model does not use dropout layers in the vision model. As we want to keep the ResNet as a feature extractor and be able to estimate uncertainty, we introduce dropout layers to $f_{AttributeMLP}$. We tested different configurations for $f_{AttributeMLP}$ and found that using a combination of dropout and batchnorm layers between fully connected layers and non-linearities worked best. The setup is displayed in Figure~\ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout} and discussed in Section \ref{sec:dropoutuncertainty}, this is equal to approximated epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty.\\
+The RDTC model does not use dropout layers in the vision model. As we want to keep the ResNet as a feature extractor and be able to estimate uncertainty, we introduce dropout layers to $f_{AttrMLP}$. We tested different configurations for $f_{AttrMLP}$ and found that using a combination of dropout and batchnorm layers between fully connected layers and non-linearities worked best. The setup is displayed in Figure~\ref{fig:f_attrMLP}. To retrieve uncertainty information, given the image features $z$ from the ResNet, we do $n$ forward passes and compute the standard deviation of the results. As proofed by \citet{gal2016dropout} and discussed in Section \ref{sec:dropoutuncertainty}, this is equal to approximated epistemic uncertainty. So theoretically, for examples, that are far from the distribution, the model was trained on, it should yield high epistemic uncertainty.\\
 After uncertainty estimation, we use two different strategies of making the model aware of its uncertainties. In the first strategy, we replace selection logits from $f_{QuestMLP}$ that are on indices with high uncertainty by $-inf$ so they can not be picked by the Gumbel softmax. We call this strategy 'remove uncertain attributes' (remRDTC). In another strategy, uncertain attributes are denoted with a $1$ in an extended decision tensor. We refer to this strategy as 'extended vocabulary' (extRDTC). In both strategies, an attribute is deemed uncertain if its uncertainty lies above a threshold that is determined by a hyperparameter.
 
 
@@ -572,18 +572,18 @@ Further, we investigate the uncertainty of our model in a classical zero-shot se
 
 
 
-
+\begin{figure}[t!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
+	\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
+	\label{fig:zero_shot_uncert}
+\end{figure}
 
 
 \section{How does Our Model Compare?}\label{sec:results}
 We compare our model to different other approaches, that either exemplify the current state of the art or are explainable.
 
-\begin{figure}[t!]
-	\centering
-		\includegraphics[width=0.7\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
-\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
-\label{fig:zero_shot_uncert}
-\end{figure}
+
 
 
 
@@ -622,16 +622,7 @@ Another explainable model is Deep Neural Decision Forest (dNDF), proposed by \ci
 The results are stated in Table~\ref{tab:benchmarks}. We see that both strategies of our model outperform other explainable methods. The achieved accuracy is similar to that of the original RDTC model and is comparable to that of unexplainable state-of-the-art methods such as ResNet. 
 
 
-
-
-\subsection{Comparing Different RDTC Models}
-We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our model has higher attribute accuracies (except for extRDTC on AWA2). %We hypothesize that this is due to the model avoiding using high-risk attributes. 
-%TODO think about last sentence again when new correlation matrix is available
-
-
-
-
-\begin{table*}[t]
+\begin{table*}[t!]
 	\caption{Class and attribute accuracy on three benchmark datasets. We compare the original aRDTC model to three different strategies of our proposed model.}
 	\label{tab:iterations}
 	\begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
@@ -655,6 +646,15 @@ We evaluate different configurations of our model on the three datasets. We comp
 		&  &  &  &  \\ 
 	\end{tabular*}
 \end{table*}
+
+
+\subsection{Comparing Different RDTC Models}
+We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our model has higher attribute accuracies (except for extRDTC on AWA2). %We hypothesize that this is due to the model avoiding using high-risk attributes. 
+%TODO think about last sentence again when new correlation matrix is available
+
+
+
+
 
 
 

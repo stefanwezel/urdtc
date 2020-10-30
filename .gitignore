@@ -1,3 +1,5 @@
+*.snm
+*.synctex.gz
 del.*
 *.~lock.*
 .ipynb_checkpoints/
