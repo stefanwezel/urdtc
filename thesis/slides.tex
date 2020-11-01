@@ -104,7 +104,7 @@
 \frametitle{What?}
 \framesubtitle{Setting}
 	\begin{itemize}%\setlength\itemsep{1.5em}
-	\item Many powerful architectures for image classification
+	\item Image classification: many powerful architectures exist
 	\item Prominent example: ResNet
 	\item Popular models only yield classification
 	\item No reasoning behind classification
@@ -126,7 +126,7 @@
 	%\label{fig:qual}
 \end{figure}
 \begin{itemize}%\setlength\itemsep{1em}
-	\item Alaniz and Akata \cite{alaniz2019explainable} propose RDTC
+	\item Alaniz et al. \cite{alaniz2019explainable} propose RDTC
 	\item Two communicating agents
 	\item Left: ask questions ---- right: look at data and answer them
 	\item Unfolding tree reveals reasoning behind classification
@@ -184,7 +184,7 @@
 \begin{frame}
 \frametitle{Introduction}
 \begin{itemize}
-	\item RDTC by Alaniz and Akata \cite{alaniz2019explainable} yields decision tree
+	\item RDTC by Alaniz et al. \cite{alaniz2019explainable} yields decision tree
 	\item Decision tree is build through communication of agents
 	\item Our aim is to introduce uncertainty to RDTC
 	\item Uncertainty allows model to i.e. detect OOD examples
@@ -283,7 +283,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Attribute-based Learner}
-\framesubtitle{Extracting features}
+\framesubtitle{Extracting features: ResNet}
 \begin{columns}[T]
 	\begin{column}{.5\textwidth}
 		\begin{itemize}
@@ -305,7 +305,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Attribute-based Learner}
-\framesubtitle{Mapping features to attributes}
+\framesubtitle{Mapping features to attributes: Attribute MLP}
 \begin{columns}[T]
 \begin{column}{.5\textwidth}
 	\begin{itemize}
@@ -326,19 +326,44 @@
 \end{columns}
 \end{frame}
 
+
 \setbeamercolor{background canvas}{bg=white}
 \setbeamercolor{normal text}{fg=darkgrey}
 \usebeamercolor[fg]{normal text}
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Recurrent Decision Tree}
-\framesubtitle{LSTM}
+\framesubtitle{Storing decisions: Explicit memory}
+\begin{columns}[T]
+	\begin{column}{.5\textwidth}
+		\begin{itemize}
+			% Your text here
+			\item store questions (indices)
+			\item and answers
+			\item iteratively increases
+		\end{itemize}
+	\end{column}
+	\begin{column}{.5\textwidth}
+		% Your image included here
+		\includegraphics[width=\textwidth]{images/urdtc_parts_memory.pdf}
+	\end{column}
+\end{columns}
+\end{frame}
+
+
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{normal text}{fg=darkgrey}
+\usebeamercolor[fg]{normal text}
+\setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
+\begin{frame}
+\frametitle{Recurrent Decision Tree}
+\framesubtitle{Keeping track: LSTM}
 \begin{columns}[T]
 \begin{column}{.5\textwidth}
 \begin{itemize}
 	% Your text here
-	\item Hidden state based on answers
-	\item and explicit memory
+	\item Hidden state based on memory
 	\item Basis for next question
 	\item Basis for classification
 \end{itemize}
@@ -356,16 +381,16 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Recurrent Decision Tree}
-\framesubtitle{Choosing questions}
+\framesubtitle{Choosing questions: Question MLP}
 \begin{columns}[T]
 \begin{column}{.5\textwidth}
 \begin{itemize}
 % Your text here
-	\item Pose new question
-	\item based on LSTM
+	\item Pose new question $c_t$
+	%\item based on LSTM
 	\item $c_t \sim p(c_t)$
-	\item GumbelSoftmax
 	\item Sample from categorical distribution
+	\item With GumbelSoftmax
 	\item $d_t = \hat{a}\left[c_t\right]$
 \end{itemize}
 \end{column}
@@ -382,7 +407,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Recurrent Decision Tree}
-\framesubtitle{Making a classification}
+\framesubtitle{Making a classification: Class MLP}
 \begin{columns}[T]
 \begin{column}{.5\textwidth}
 \begin{itemize}
@@ -408,7 +433,7 @@
 \begin{itemize}
 	\item Optimize for class (and attribute accuracy)
 	\begin{align*}
-	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\mathcal{L}_{CE}(y,\hat{y}_t) + \lambda \mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t}) \right]
+	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\underbrace{\mathcal{L}_{CE}(y,\hat{y}_t)}_{Class} + \lambda \underbrace{\mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t})}_{Attr} \right]
 	\end{align*}
 	\item $\lambda$ can be used to balance the two loss terms
 	\item For all of our experiments, we use $\lambda=0.2$
@@ -453,7 +478,7 @@
 	\includegraphics[width=0.6\textwidth]{images/post.pdf}
 	\begin{itemize}
 		\item Data can be described by (infinitely) many functions
-		\item A GP is a PDF over these functions
+		\item GP is PDF over these functions
 		\item Intuition: $\rightarrow$ GP yields probability for function values %at any index
 		\item Parameterized by mean function and covariance function
 		\item Variance corresponds to model uncertainty
@@ -475,11 +500,11 @@
 	% Why 
 	\item Why care about GP's?
 	\item Neural net is set of weighted linear functions, activated by non-linearity
-	\item Putting PDF over each weight creates finite GP
-	\item We can view neural net as approximation to GP
-	\item We can extract uncertainty from a neural net
+	\item PDF over each weight $\rightarrow$ finite GP
+	\item Neural net $\approx$ GP
+	\item $\rightarrow$ Extract model uncertainty from a neural net
 	\item Proof by Gal and Ghahramani \cite{gal2016dropout}
-	\item We use this proof as theoretical foundation for estimating uncertainty in RDTC
+	\item $\rightarrow$ Theoretical foundation for estimating uncertainty in RDTC
 	%\item Gal and Ghahramani \cite{gal2016dropout} proof variance from dropout corresponds to model uncertainty
 	%\item We use their proof as foundation for our uncertainty estimate
 	%\item Key idea is to rewrite objective of Variational GP as dropout neural net objective
@@ -504,7 +529,7 @@
 	\item For covariance function $\rightarrow$ Monte-Carlo integration
 	\item Approximated GP's objective can be rewritten as dropout net
 	%\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
-	\item Variance arising from dropout can be interpreted as model uncertainty
+	\item Variance arising from dropout $\rightarrow$ model uncertainty
 \end{itemize}
 \end{frame}
 
@@ -535,7 +560,7 @@
 \frametitle{How?}
 \framesubtitle{How do we get uncertainty information?}\begin{figure}
 	\centering
-	\includegraphics[width=0.8\textwidth]{images/where_is_uncertainty.pdf} 
+	\includegraphics[width=0.9\textwidth]{images/where_is_uncertainty.pdf} 
 \end{figure}
 \begin{itemize}
 	\item Use Gal and Ghahramani's \cite{gal2016dropout} proof to estimate uncertainty 
@@ -602,6 +627,7 @@
 		\item Prevent model from asking about uncertain attributes\\$\rightarrow$ remRDTC
 		\item We give the model the ability to answer with 'I don't know'\\$\rightarrow$ extRDTC
 	\end{itemize}
+	\item Attribute uncertain if above threshold hyperparameter
 	\item Don't allow the model to use gradients from uncertain attributes
 	\item Uncertainty information remains inductive bias% and can not be misused
 	%\item This ensures that the uncertainty information only serves as an inductive bias and the model does not misuse it
@@ -615,14 +641,14 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{Removing uncertain attributes (remRDTC)}
+\framesubtitle{remRDTC - Removing uncertain attributes}
 \begin{figure}
 	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.pdf}
 \end{figure}
 \begin{itemize}
+	\item Idea: Skip uncertain questions
 	\item Reminder: output from $f_{QuestMLP}$ is attribute index %that indicates the attribute in question
-	\item If attribute is deemed uncertain by AbL, replace selection logits at those indices with $-\infty$
-	\\ $\rightarrow$ Gumbel softmax cannot pick these attributes
+	\item If attribute deemed uncertain, replace logit with $-\infty$\\ $\rightarrow$ Gumbel softmax cannot pick these attributes
 \end{itemize}
 \end{frame}
 
@@ -633,11 +659,12 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{Extending the vocabulary (extRDTC)}
+\framesubtitle{extRDTC - Extending the vocabulary}
 \begin{figure}
-	\includegraphics[width=0.8\linewidth]{images/extRDTC_intution.pdf}
+	\includegraphics[width=0.8\linewidth]{images/how_to_extRDTC.pdf}
 \end{figure}
 \begin{itemize}
+	\item Idea: AbL can say 'I don't know'
 	\item Binary vector with 1s where uncertainty is above threshold
 	\item Append to  initial answer% and can be used by the RDT
 	\item Prevent conflicting answers
@@ -712,7 +739,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Experiments}
-\framesubtitle{Datasets}
+\framesubtitle{Datasets with attributes}
 \begin{itemize}
 	\item Animals with Attributes 2 (AWA2)
 	\begin{itemize}
@@ -922,7 +949,7 @@
 		\textbf{CUB}& & & &\\\hline\hline
 		Class &  \textbf{77.9}& 76.8 & 77.7 & 77.8 \\ 
 		\hline
-		Attribute &  &  & 90.0 & \textbf{90.6} \\ 
+		Attribute &  84.9&  83.9& \textbf{87.0} & 86.9 \\
 		&  &  &  &  \\ 
 	\end{tabular*}
 \end{table}
@@ -990,7 +1017,7 @@
 \framesubtitle{A qualitative Example}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.7\textwidth]{images/example_tree.pdf}
+	\includegraphics[width=1\textwidth]{images/example_tree.pdf}
 %\caption{Five steps of a extRDTC decision process. The model has used an uncertain attribute and the final classification is wrong. In such a case, a human user could be consulted and manually classify the image. Note that the the softmax classification output is highly confident despite being wrong.}
 \label{fig:example_tree}
 \end{figure}
@@ -1010,11 +1037,11 @@
 \frametitle{Conclusions}
 %\framesubtitle{}
 \begin{itemize}
-	\item Based on proof by Gal and Ghahramani \cite{gal2016dropout} estimate uncertainty
-	\item Uncertainty is used in RDTC by Alaniz and Akata \cite{alaniz2019explainable}
+	\item Estimate uncertainty based on Gal and Ghahramani \cite{gal2016dropout}
+	\item Used in RDTC by Alaniz et al. \cite{alaniz2019explainable}
 	\item Two strategies: remRDTC and extRDTC
-	\item We investigate uncertainty and its relationship to other variables
-	\item We show that OOD examples yield high uncertainty
+	\item We investigate uncertainty and relationship to other variables
+	\item OOD examples yield high uncertainty
 	\item Uncertain RDTC's achieve SOTA accuracy
 \end{itemize}
 \end{frame}
