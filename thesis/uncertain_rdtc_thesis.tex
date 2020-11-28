@@ -597,7 +597,7 @@ We compare our model to different other approaches, that either exemplify the cu
 		&                                AWA2&          aPY&          CUB\\
 		\hline
 		\hline
-		ResNet \cite{he2016deep}&       $98.2\pm 0.0$& $85.1\pm 0.6$ & $79.0\pm 0.2$ \\ 
+		ResNet \cite{he2016deep}&       $98.2\pm 0.0$& $85.1\pm 0.6$ & $\mathbf{79.0}\pm 0.2$ \\ 
 		\hline 
 		DT&                             $78.0\pm 0.4$&$64.3\pm 0.6$  & $19.3\pm 0.3$  \\ 
 		\hline 
@@ -609,9 +609,9 @@ We compare our model to different other approaches, that either exemplify the cu
 		\hline 
 		aRDTC\cite{alaniz2019explainable}&$98.6$&         $86.1$&  $77.9\pm 0.6$\\ 
 		\hline
-		remRDTC(ours)&          $98.7$          &          $86.4$&  $77.7$\\ 
+		remRDTC(ours)&          $\mathbf{98.7}$          &          $\mathbf{86.4}$&  $77.7$\\ 
 		\hline
-		extRDTC(ours)&          $98.7$          &          $85.4$&  $77.8$\\
+		extRDTC(ours)&          $\mathbf{98.7}$          &          $85.4$&  $77.8$\\
 		%\hline 
 	\end{tabular*}
 \end{table*}
@@ -626,31 +626,20 @@ The results are stated in Table~\ref{tab:benchmarks}. We see that both strategie
 	\caption{Class and attribute accuracy on three benchmark datasets. We compare the original aRDTC model to three different strategies of our proposed model.}
 	\label{tab:iterations}
 	\begin{tabular*}{\textwidth}{c  @{\extracolsep{\fill}}c c c c}
-		& aRDTC \cite{alaniz2019explainable} & Random Baseline & remRDTC & extRDTC \\ 
+		& aRDTC \cite{alaniz2019explainable} & randRDTC & remRDTC & extRDTC \\ 
 		%\hline 
 		%\hline
-		\textbf{AWA2}& & & &\\\hline\hline
-		Class &  98.6&  98.5&  98.7&  98.7\\ 
-		\hline 
-		Attribute & 80.4 & 84.6 &  87.5&  82.31\\ 
-		&  &  &  &  \\
-		\textbf{aPY}& & & &\\\hline\hline
-		Class & 86.1&  86.5&  86.4&  85.4\\ 
-		\hline 
-		Attribute &  86.4&  86.2&  87.6& 87.12 \\ 
-		&  &  &  &  \\ 
 		\textbf{CUB}& & & &\\\hline\hline
-		Class &  77.9& 76.8 & 77.7 & 77.8 \\ 
+		Class &  $\mathbf{77.9}$& $76.8$ & $77.7$ & $77.8$ \\ 
 		\hline 
-		Attribute &  68.6&  70.0& 77.4 & 82.6 \\ 
+		Attribute &  $84.9$&  $83.9$& $\mathbf{87.0}$ & $86.9$ \\ 
 		&  &  &  &  \\ 
 	\end{tabular*}
 \end{table*}
 
 
 \subsection{Comparing Different RDTC Models}
-We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our model has higher attribute accuracies (except for extRDTC on AWA2). %We hypothesize that this is due to the model avoiding using high-risk attributes. 
-%TODO think about last sentence again when new correlation matrix is available
+We evaluate different configurations of our model on the three datasets. We compare the original RDTC model to models using our two proposed strategies of remRDTC and extRDTC. We also include randRDTC as a baseline that randomly removes attributes, based on the average probability of an attribute having an uncertainty higher than the specified threshold. Additionally to class accuracy, we also consider the model's attribute accuracy. For all versions, we use $\lambda=0.2$. The results are displayed in Table~\ref{tab:iterations}. We can see, that aRDTC, remRDTC, and extRDTC achieve similar class accuracies while the randRDTC strategy has a slightly lower class accuracy in most experiments. Our proposed models have higher attribute accuracies.
 
 
 

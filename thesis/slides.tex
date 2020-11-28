@@ -71,8 +71,9 @@
 
 
 \title{Uncertainty in\\Recurrent Decision Tree Classifiers}
-\author{Stefan Wezel}
+\author{Stefan Wezel\\Supervised by Stephan Alaniz, Zeynep Akata}
 \institute{Explainable Machine Learning}
+
 \date{\today}
 
 
@@ -104,7 +105,8 @@
 \frametitle{What?}
 \framesubtitle{Setting}
 	\begin{itemize}%\setlength\itemsep{1.5em}
-	\item Image classification: many powerful architectures exist
+	\item Building on RDTC model by Alaniz et al. \cite{alaniz2019explainable}
+	\item Image classification: many powerful architectures out there
 	\item Prominent example: ResNet
 	\item Popular models only yield classification
 	\item No reasoning behind classification
@@ -140,7 +142,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{What?}
-\framesubtitle{Introducing Uncertainty to a RDTC}
+\framesubtitle{Introducing Uncertainty to RDTC}
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth]{images/urdtc_intuition.pdf}
@@ -209,8 +211,8 @@
 	\label{fig:uncertainRDTC}
 \end{figure}
 \begin{itemize}
-	\item RDT can not see the images and only ask if attribute is present
-	\item The AbL can see the image and answer RDT's questions
+	\item RDT can not see image but ask if attribute is present
+	\item AbL can see image and answer RDT's questions
 \end{itemize}
 \end{frame} 
 
@@ -338,9 +340,9 @@
 	\begin{column}{.5\textwidth}
 		\begin{itemize}
 			% Your text here
-			\item store questions (indices)
-			\item and answers
-			\item iteratively increases
+			\item Store questions (indices)
+			\item and answers (Y,N,?)
+			\item Iteratively increases
 		\end{itemize}
 	\end{column}
 	\begin{column}{.5\textwidth}
@@ -365,7 +367,7 @@
 	% Your text here
 	\item Hidden state based on memory
 	\item Basis for next question
-	\item Basis for classification
+	%\item Basis for classification
 \end{itemize}
 \end{column}
 \begin{column}{.5\textwidth}
@@ -388,10 +390,10 @@
 % Your text here
 	\item Pose new question $c_t$
 	%\item based on LSTM
-	\item $c_t \sim p(c_t)$
-	\item Sample from categorical distribution
-	\item With GumbelSoftmax
 	\item $d_t = \hat{a}\left[c_t\right]$
+	\item Sample from log probabilities
+	\item $c_t \sim p(c_t)$
+	\item With GumbelSoftmax
 \end{itemize}
 \end{column}
 \begin{column}{.5\textwidth}
@@ -411,8 +413,10 @@
 \begin{columns}[T]
 \begin{column}{.5\textwidth}
 \begin{itemize}
-	\item Classification in each communication step
-	\item For classification loss
+	\item Based on explicit memory
+	\item Make classification
+	%\item For classification loss
+	\item In every communication step
 \end{itemize}
 \end{column}
 \begin{column}{.5\textwidth}
@@ -435,7 +439,7 @@
 	\begin{align*}
 	\mathcal{L} = \frac{1}{T}\sum_{t=1}^{T}\left[(1-\lambda)\underbrace{\mathcal{L}_{CE}(y,\hat{y}_t)}_{Class} + \lambda \underbrace{\mathcal{L}_{CE}(\alpha_{y,c_t},\hat{\alpha}_{c_t})}_{Attr} \right]
 	\end{align*}
-	\item $\lambda$ can be used to balance the two loss terms
+	\item $\lambda$ can be used to balance the two terms
 	\item For all of our experiments, we use $\lambda=0.2$
 	\item Discourage deep trees%with $T$ %(number of communication steps)
 \end{itemize}
@@ -479,7 +483,7 @@
 	\begin{itemize}
 		\item Data can be described by (infinitely) many functions
 		\item GP is PDF over these functions
-		\item Intuition: $\rightarrow$ GP yields probability for function values %at any index
+		%\item Intuition: $\rightarrow$ GP yields probability for function values %at any index
 		\item Parameterized by mean function and covariance function
 		\item Variance corresponds to model uncertainty
 	\end{itemize}
@@ -522,12 +526,12 @@
 	%\item A GP can be seen as an infinitely wide neural network
 	%\item In turn, we can view a neural network with a finite amount of units as an approximation to a GP
 	\item Posterior over functions requires computing integrals
-	\item Intractable integrals require methods of variational inference
+	\item Methods of variational inference
 	\begin{itemize}
 		\item GP objective $\rightarrow$ minimization objective
 	\end{itemize}
 	\item For covariance function $\rightarrow$ Monte-Carlo integration
-	\item Approximated GP's objective can be rewritten as dropout net
+	\item Rewrite approximate GP objective as dropout net objective
 	%\item This allows us to rewrite a GP's objective as to objective of a dropout neural network
 	\item Variance arising from dropout $\rightarrow$ model uncertainty
 \end{itemize}
@@ -543,7 +547,7 @@
 \frametitle{Dropout Uncertainty Estimation \cite{gal2016dropout}}
 \begin{itemize}
 	%\item RDTC is a model consisting of two agents
-	\item Dropout net as special case of GP
+	\item Neural net $\approx$ GP
 	\item GP uses approximation techniques
 	\item Rewrite GP objective as dropout net objective
 	\item Proofed by Gal and Ghahramani \cite{gal2016dropout} 
@@ -564,8 +568,9 @@
 \end{figure}
 \begin{itemize}
 	\item Use Gal and Ghahramani's \cite{gal2016dropout} proof to estimate uncertainty 
-	\item We want AbL to say '?' in the case of high uncertainty
+	%\item We want AbL to say '?' in the case of high uncertainty
 	%\item However, we want to keep the ResNet as feature extractor
+	\item Keep ResNet
 	\item Make $f_{AttrMLP}$ a dropout MLP
 	\item After extracting features $\rightarrow$ compute $Var(n \;forward\;passes)$
 	%\item According to proof, this corresponds to model uncertainty
@@ -627,9 +632,9 @@
 		\item Prevent model from asking about uncertain attributes\\$\rightarrow$ remRDTC
 		\item We give the model the ability to answer with 'I don't know'\\$\rightarrow$ extRDTC
 	\end{itemize}
-	\item Attribute uncertain if above threshold hyperparameter
-	\item Don't allow the model to use gradients from uncertain attributes
-	\item Uncertainty information remains inductive bias% and can not be misused
+	\item Attribute uncertain if above hyperparameter threshold
+	%\item Don't allow the model to use gradients from uncertain attributes
+	%\item Uncertainty information remains inductive bias% and can not be misused
 	%\item This ensures that the uncertainty information only serves as an inductive bias and the model does not misuse it
 \end{itemize}
 \end{frame}
@@ -641,7 +646,7 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{remRDTC - Removing uncertain attributes}
+\framesubtitle{\textbf{remRDTC} - Removing uncertain attributes}
 \begin{figure}
 	\includegraphics[width=0.8\linewidth]{images/how_to_remRDTC.pdf}
 \end{figure}
@@ -659,14 +664,16 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}
 \frametitle{Using Uncertainty Information}
-\framesubtitle{extRDTC - Extending the vocabulary}
+\framesubtitle{\textbf{extRDTC} - Extending the vocabulary}
 \begin{figure}
 	\includegraphics[width=0.8\linewidth]{images/how_to_extRDTC.pdf}
 \end{figure}
 \begin{itemize}
 	\item Idea: AbL can say 'I don't know'
 	\item Binary vector with 1s where uncertainty is above threshold
-	\item Append to  initial answer% and can be used by the RDT
+	\begin{itemize}
+			\item $\rightarrow$ Append to  initial answer% and can be used by the RDT
+	\end{itemize}
 	\item Prevent conflicting answers
 \end{itemize}
 \end{frame}
@@ -722,7 +729,7 @@
 \frametitle{Experiments}
 \framesubtitle{}
 \begin{itemize}
-	\item RDTC is now aware of, and can express its uncertainties
+	\item RDTC is now aware of, and can express uncertainties
 	\item In experiments, we:
 	\begin{itemize}
 		\item Investigate uncertainty and its relationship to other variables
@@ -764,19 +771,19 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}	
 \begin{frame}	
 \frametitle{Experiments}
-\framesubtitle{Investigating Uncertainties in CUB}
+\framesubtitle{Uncertainty and its relationship to other variables}
 \begin{itemize}
-	\item Misclassification rate, uncertainty, and usage of attributes
+	\item Accuracy, uncertainty, and usage of attributes
 \end{itemize} 
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.5\textwidth]{images/corr_matrix.pdf}
+		\includegraphics[width=0.6\textwidth]{images/corr_matrix.pdf}
 		%\caption{Correlations between misclassification rate, uncertainty, and usage of attributes.}
 		%\label{fig:corr_matrix}
 	\end{figure}
 	\begin{itemize}
 		\item Positive correlation between usage and accuracy
-		\item Almost no correlation between uncertainty and accuracy
+		\item No correlation between uncertainty and accuracy
 	\end{itemize}
 \end{frame}
 
@@ -789,19 +796,19 @@
 \setbeamertemplate{itemize item}{\color{darkgrey}$\circ$}
 \begin{frame}	
 \frametitle{Experiments}
-\framesubtitle{Investigating Uncertainties in CUB}
+\framesubtitle{Uncertainty and its relationship to other variables}
 \begin{itemize}
 	%\item Let's have a look at the actual values
 	\item Uncertainty, misclassification rate, usage (size $\propto$ usage)
 \end{itemize}
 	\begin{figure}
 		\centering
-		\includegraphics[width=0.5\textwidth]{images/error_sigma_corr_all.pdf} 
+		\includegraphics[width=0.6\textwidth]{images/error_sigma_corr_all.pdf} 
 		%\caption{Misclassification rates of attributes and their respective uncertainties. The size of the points represents how often they are used.}
 		%\label{fig:correlations}
 	\end{figure}
 	\begin{itemize}
-		\item Uncertain attribute seem to be misclassified more often
+		\item Uncertain attributes seem to be misclassified more often
 	\end{itemize}
 \end{frame} 
 
@@ -815,17 +822,20 @@
 \frametitle{Experiments}
 \framesubtitle{OOD Detection}
 \begin{itemize}
-	\item We test extRDTC in zero shot setting (using CUB)
-	\item $\frac{1}{4}$ of classes not seen in training
+	\item extRDTC in zero shot setting (using CUB)
+	%\item $\frac{1}{4}$ of classes not seen in training
 	\item Histogram of uncertainty values of seen and unseen classes
 \end{itemize}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.5\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
+	\includegraphics[width=0.6\textwidth]{images/zero_shot_class_uncertainty_median_hist.pdf}
 	%\caption{Uncertainty values of attributes from seen and unseen classes. Examples from unseen classes have a higher attribute uncertainty. Attributes with an uncertainty value below $0.0000001$ are not shown.}
 \end{figure}
 \begin{itemize}
+	\item Every bin > 0, more values from unseen classes
 	\item Unseen classes have higher uncertainty values
+	%\item The higher the bin, the greater the number of values from unseen classes
+	%\item Unseen classes have higher uncertainty values
 \end{itemize}
 \end{frame} 
 
@@ -842,17 +852,19 @@
 \begin{itemize}
 	\item Decision Tree (DT)
 	\begin{itemize}
-		\item Use extracted ResNet features
-		\item Try to split until every leaf node corresponds to one class
+		\item Split on ResNet features
+		\item Split until every leaf node corresponds to one class
 	\end{itemize}
 	\item Explainable Decision Tree (XDT)
 	\begin{itemize}
-		\item Use learned attribute representations instead of features
-		\item Attribute representations from $f_{AttrMLP}$
+		\item Split on $f_{AttrMLP}$ attributes
+		\item Split until every leaf node corresponds to one class
+		%\item Use learned attribute representations instead of features
+		%\item Attribute representations from $f_{AttrMLP}$
 	\end{itemize}
 	\item dNDF \cite{kontschieder2015deep}
 \begin{itemize}
-	\item Every node is parameterized differentiable function
+	\item Every inner node is parameterized differentiable function
 	\item Leaf nodes represent class distributions
 	%\item Every route through the tree leads to leaf node
 	\item Learn the optimal route through the tree for each example
@@ -983,7 +995,7 @@
 	\item The right kind of uncertainty?
 	\begin{itemize}
 		%\item We only consider model uncertainty (epistemic uncertainty)
-		\item Uncertainty arising from noise or occlusions is not considered
+		\item Uncertainty arising from noise or occlusions not considered
 		\item Dropout Uncertainty Estimation lacks empirical proof
 	\end{itemize}
 	\item Other methods of uncertainty estimation%/ Approximated BNN's
@@ -993,7 +1005,7 @@
 	\end{itemize}
 	\item Beyond attribute uncertainty
 	\begin{itemize}
-		\item Estimate uncertainty in other parts of the model (i.e. $f_{ClassMLP}$)
+		\item Estimate uncertainty in other parts (i.e. $f_{ClassMLP}$)
 	\end{itemize}
 \end{itemize}
 \end{frame} 
